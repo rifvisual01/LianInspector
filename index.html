@@ -6,13 +6,14 @@
   <title>Vehicle Inspection System</title>
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+	 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html, body { height: 100%; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif; font-size: 14px; }
-        /* Modals Override - Maximum Priority */
-        #reportModal, #staffModal {
+        /* Report Modal Override - Maximum Priority */
+        #reportModal {
+            display: none !important;
             position: fixed !important;
             top: 0 !important;
             left: 0 !important;
@@ -24,23 +25,27 @@
             background: rgba(0, 0, 0, 0.8) !important;
             backdrop-filter: blur(6px) !important;
             padding: 16px !important;
+            pointer-events: auto !important;
             align-items: center !important;
             justify-content: center !important;
             overflow-y: auto !important;
-            display: none;
-            visibility: hidden;
-            opacity: 0;
-            pointer-events: none;
         }
         
-        #reportModal.active, #staffModal.active {
+        #reportModal.hidden {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+        }
+        
+        #reportModal.active {
             display: flex !important;
             visibility: visible !important;
             opacity: 1 !important;
             pointer-events: auto !important;
         }
         
-        #reportModal > div, #staffModal > div {
+        #reportModal > div {
             position: relative !important;
             z-index: 1000000 !important;
             width: 100% !important;
@@ -591,12 +596,6 @@
       </div>
      </div>
      <script>
-	 
-	 const supabaseUrl = 'https://hbsxxfdxahpqaapaogrn.supabase.co';
-const supabaseKey = 'sb_publishable_8PEGIBe3j5guJP1Mh_pnIQ_Bbj4yZhz';
-
-const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
-
         // Separate data stores for each sheet
         let sheetUsers = [];
         let sheetCategories = [];
@@ -604,7 +603,6 @@ const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
         let sheetInspections = [];
         let sheetInspectionDetails = [];
         let sheetPhotos = [];
-        let sheetActiveInspections = [];
         
         // Alias for compatibility
         let allUsers = [];
@@ -616,7 +614,6 @@ const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
         let adminExists = false;
         let selectedCategoryFilter = null;
         let currentInspectionData = null;
-        let currentUserActiveInspection = null;
 
         const dataHandler = {
             onDataChanged(data) {
@@ -627,7 +624,6 @@ const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
                 sheetInspections = data.filter(d => d.type === 'sheet_inspections') || [];
                 sheetInspectionDetails = data.filter(d => d.type === 'sheet_inspection_details') || [];
                 sheetPhotos = data.filter(d => d.type === 'sheet_photos') || [];
-                sheetActiveInspections = data.filter(d => d.type === 'sheet_active_inspections') || [];
                 
                 // Also sync legacy item types for backward compatibility
                 const legacyUsers = data.filter(d => d.type === 'user') || [];
@@ -641,11 +637,6 @@ const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
                 allItems = [...sheetItems, ...legacyItems];
                 allInspections = [...sheetInspections, ...legacyInspections];
                 
-                // Update current user's active inspection
-                if (currentUser) {
-                    currentUserActiveInspection = sheetActiveInspections.find(ai => ai.inspectorUsername === currentUser.username);
-                }
-                
                 adminExists = allUsers.some(u => u.role === 'admin');
                 updateQuickLoginUI();
                 updateDashboard();
@@ -657,14 +648,82 @@ const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
             }
         };
 
+		 window.dataSdk = {
+  async create(data) {
+    const table = getTable(data.type);
+
+    const { data: result, error } = await supabase
+      .from(table)
+      .insert([data]);
+
+    return error
+      ? { isOk: false, error }
+      : { isOk: true, data: result };
+  },
+
+  async update(data) {
+    const table = getTable(data.type);
+
+    const { error } = await supabase
+      .from(table)
+      .update(data)
+      .eq('id', data.id);
+
+    return error
+      ? { isOk: false, error }
+      : { isOk: true };
+  },
+
+  async delete(data) {
+    const table = getTable(data.type);
+
+    const { error } = await supabase
+      .from(table)
+      .delete()
+      .eq('id', data.id);
+
+    return error
+      ? { isOk: false, error }
+      : { isOk: true };
+  }
+};
+
+function getTable(type) {
+  if (type === 'user') return 'users';
+  if (type === 'inspection') return 'inspections';
+  if (type === 'category') return 'categories';
+  if (type === 'item') return 'items';
+}
+
+		 async function loadInitialData() {
+  const { data: users } = await supabase.from('users').select('*');
+  const { data: categories } = await supabase.from('categories').select('*');
+  const { data: items } = await supabase.from('items').select('*');
+  const { data: inspections } = await supabase.from('inspections').select('*');
+
+  sheetUsers = users || [];
+  sheetCategories = categories || [];
+  sheetItems = items || [];
+  sheetInspections = inspections || [];
+}
+		 
         (async () => {
-    // const initResult = await window.dataSdk.init(dataHandler);
+            const initResult = await window.dataSdk.init(dataHandler);
+            if (!initResult.isOk) {
+                showToast('Error initializing data system', 'error');
+            }
+        })();
 
-    // 🔥 TAMBAHKAN INI DI SINI
-    loadDataFromSupabase();
+		 async function testSupabase() {
+  const { data, error } = await supabase
+    .from('users')
+    .select('*');
 
-})();
+  console.log("TEST RESULT:", data, error);
+}
 
+testSupabase();
+		 
         function showToast(message, type = 'success') {
             const toast = document.getElementById('toast');
             const toastMsg = document.getElementById('toastMessage');
@@ -679,25 +738,7 @@ const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
             toast.classList.remove('hidden');
             setTimeout(() => toast.classList.add('hidden'), 3000);
         }
-       
-async function loadDataFromSupabase() {
-    const { data: users } = await supabase.from('users').select('*');
-    const { data: categories } = await supabase.from('categories').select('*');
-    const { data: items } = await supabase.from('items').select('*');
-    const { data: inspections } = await supabase.from('inspections').select('*');
 
-    // mapping ke struktur lama kamu
-    const combinedData = [
-        ...(users || []).map(d => ({ ...d, type: 'sheet_users' })),
-        ...(categories || []).map(d => ({ ...d, type: 'sheet_categories' })),
-        ...(items || []).map(d => ({ ...d, type: 'sheet_items' })),
-        ...(inspections || []).map(d => ({ ...d, type: 'sheet_inspections' }))
-    ];
-
-    // 🔥 ini yang bikin UI kamu tetap jalan
-    dataHandler.onDataChanged(combinedData);
-}
-       
         function setButtonLoading(button, isLoading, originalText = null) {
             if (isLoading) {
                 button.disabled = true;
@@ -1839,17 +1880,11 @@ async function loadDataFromSupabase() {
         };
 
         let currentEditingStaffId = null;
+        let isAdminEditMode = false;
 
-        document.getElementById('addStaffBtn')?.addEventListener('click', openAddStaffModal);
-
-        function openAddStaffModal(e) {
-            if (e) {
-                e.preventDefault();
-                e.stopPropagation();
-            }
-            
+        document.getElementById('addStaffBtn')?.addEventListener('click', () => {
             currentEditingStaffId = null;
-            
+            isAdminEditMode = false;
             document.getElementById('staffUsername').value = '';
             document.getElementById('staffPassword').value = '';
             document.getElementById('staffRole').value = 'inspector';
@@ -1858,21 +1893,14 @@ async function loadDataFromSupabase() {
             document.getElementById('staffPassword').disabled = false;
             document.getElementById('staffRole').disabled = false;
             document.getElementById('staffModalTitle').textContent = 'Tambah Staff Baru';
-            
-            const staffModal = document.getElementById('staffModal');
-            staffModal.classList.remove('hidden');
-            staffModal.classList.add('active');
-        }
+            document.getElementById('staffModal').classList.remove('hidden');
+        });
 
-        document.getElementById('cancelStaffBtn')?.addEventListener('click', closeStaffModal);
-
-        function closeStaffModal() {
-            const staffModal = document.getElementById('staffModal');
-            staffModal.classList.add('hidden');
-            staffModal.classList.remove('active');
-            document.body.style.overflow = 'auto';
+        document.getElementById('cancelStaffBtn')?.addEventListener('click', () => {
+            document.getElementById('staffModal').classList.add('hidden');
             currentEditingStaffId = null;
-        }
+            isAdminEditMode = false;
+        });
 
         document.getElementById('saveStaffBtn')?.addEventListener('click', async () => {
             const button = document.getElementById('saveStaffBtn');
@@ -1888,9 +1916,10 @@ async function loadDataFromSupabase() {
 
             if (currentEditingStaffId) {
                 // Update existing staff
-                const staffToUpdate = sheetUsers.find(u => u.__backendId === currentEditingStaffId);
+                const staffToUpdate = allUsers.find(u => u.__backendId === currentEditingStaffId);
                 if (staffToUpdate) {
-                    if (username !== staffToUpdate.username && sheetUsers.find(u => u.username === username)) {
+                    // Check if username is being changed and if it already exists
+                    if (username !== staffToUpdate.username && allUsers.find(u => u.username === username)) {
                         showToast('Username sudah terdaftar', 'error');
                         setButtonLoading(button, false);
                         return;
@@ -1907,7 +1936,9 @@ async function loadDataFromSupabase() {
                     setButtonLoading(button, false);
                     
                     if (result.isOk) {
-                        closeStaffModal();
+                        document.getElementById('staffModal').classList.add('hidden');
+                        currentEditingStaffId = null;
+                        isAdminEditMode = false;
                         showToast('✓ Staff berhasil diperbarui!');
                     } else {
                         showToast('Gagal memperbarui staff', 'error');
@@ -1917,20 +1948,20 @@ async function loadDataFromSupabase() {
                 // Create new staff
                 const role = document.getElementById('staffRole').value;
 
-                if (sheetUsers.find(u => u.username === username)) {
+                if (allUsers.find(u => u.username === username)) {
                     showToast('Username sudah terdaftar', 'error');
                     setButtonLoading(button, false);
                     return;
                 }
 
                 const newStaff = {
-                    type: 'sheet_users',
+                    type: 'user',
                     id: 'user_' + Date.now(),
-                    username: username,
-                    password: password,
-                    name: username,
+                    name: '',
                     email: '',
-                    role: role,
+                    username,
+                    password,
+                    role,
                     createdAt: new Date().toISOString()
                 };
 
@@ -1938,7 +1969,7 @@ async function loadDataFromSupabase() {
                 setButtonLoading(button, false);
                 
                 if (result.isOk) {
-                    closeStaffModal();
+                    document.getElementById('staffModal').classList.add('hidden');
                     showToast('✓ Staff berhasil ditambahkan!');
                 } else {
                     showToast('Gagal menambahkan staff', 'error');
@@ -1961,7 +1992,7 @@ async function loadDataFromSupabase() {
                 const isCurrentUser = currentUser && currentUser.username === s.username;
                 const roleIcon = s.role === 'admin' ? '👑' : '👤';
                 const roleColor = s.role === 'admin' ? 'from-purple-600 to-purple-700' : 'from-blue-600 to-blue-700';
-                const backendId = s.__backendId || s.id || 'staff_' + Math.random();
+                const roleBg = s.role === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700';
                 
                 const card = document.createElement('div');
                 card.className = 'card-modern rounded-xl shadow-md hover:shadow-lg transition-all border border-gray-200 hover:border-blue-300 overflow-hidden group';
@@ -1983,11 +2014,11 @@ async function loadDataFromSupabase() {
                         ${isCurrentUser ? '<div class="text-xs bg-amber-50 border border-amber-200 px-2 py-1 rounded text-amber-700 font-medium">✓ Current User</div>' : ''}
                     </div>
                     <div class="px-3 pb-3 flex gap-2 border-t border-gray-100 pt-2">
-                        <button type="button" class="edit-btn-staff flex-1 flex items-center justify-center gap-1 px-2 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg transition-all font-semibold text-xs" data-id="${backendId}" title="Edit">
+                        <button class="edit-staff-btn flex-1 flex items-center justify-center gap-1 px-2 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg transition-all font-semibold text-xs" data-staff-id="${s.__backendId}" title="Edit">
                             <i data-lucide="pencil" style="width: 14px; height: 14px;"></i>
                             <span>Edit</span>
                         </button>
-                        <button type="button" class="delete-btn-staff flex-1 flex items-center justify-center gap-1 px-2 py-2 bg-red-50 hover:bg-red-100 text-red-700 rounded-lg transition-all font-semibold text-xs" data-id="${backendId}" title="Hapus">
+                        <button class="delete-staff-btn flex-1 flex items-center justify-center gap-1 px-2 py-2 bg-red-50 hover:bg-red-100 text-red-700 rounded-lg transition-all font-semibold text-xs" data-staff-id="${s.__backendId}" title="Hapus">
                             <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>
                             <span>Hapus</span>
                         </button>
@@ -1996,30 +2027,20 @@ async function loadDataFromSupabase() {
                 list.appendChild(card);
             });
 
-            // Attach event listeners dengan delegasi atau langsung
-            setTimeout(() => {
-                document.querySelectorAll('.edit-btn-staff').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        const staffId = btn.getAttribute('data-id');
-                        console.log('✏️ Edit staff clicked:', staffId);
-                        editStaff(staffId);
-                    });
+            // Attach event listeners
+            document.querySelectorAll('.edit-staff-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    editStaff(btn.dataset.staffId);
                 });
+            });
 
-                document.querySelectorAll('.delete-btn-staff').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        const staffId = btn.getAttribute('data-id');
-                        console.log('🗑️ Delete staff clicked:', staffId);
-                        deleteStaff(staffId);
-                    });
+            document.querySelectorAll('.delete-staff-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    deleteStaff(btn.dataset.staffId);
                 });
+            });
 
-                lucide.createIcons();
-            }, 100);
+            lucide.createIcons();
         }
 
         window.editStaff = (id) => {
@@ -2044,41 +2065,15 @@ async function loadDataFromSupabase() {
 
         window.deleteStaff = async (id) => {
             const user = sheetUsers.find(u => u.__backendId === id);
-            if (!user) {
-                console.error('Staff not found:', id);
-                showToast('Staff tidak ditemukan', 'error');
-                return;
-            }
-            
-            // Show inline confirmation instead of alert
-            const btn = document.querySelector(`[data-id="${id}"].delete-btn-staff`);
-            if (btn && btn.dataset.confirmPending !== 'true') {
-                btn.dataset.confirmPending = 'true';
-                const originalHTML = btn.innerHTML;
-                btn.innerHTML = '<i data-lucide="alert-circle" style="width: 14px; height: 14px;"></i> <span>Yakin?</span>';
-                btn.style.backgroundColor = '#fee2e2';
-                btn.style.color = '#991b1b';
-                btn.style.borderColor = '#fca5a5';
-                showToast('⚠️ Tekan lagi untuk hapus staff ini!');
-                lucide.createIcons();
-                
-                setTimeout(() => {
-                    btn.dataset.confirmPending = 'false';
-                    btn.innerHTML = originalHTML;
-                    btn.style.backgroundColor = '';
-                    btn.style.color = '';
-                    btn.style.borderColor = '';
-                    lucide.createIcons();
-                }, 3000);
-                return;
-            }
-            
-            // Second click - actually delete
-            const result = await window.dataSdk.delete(user);
-            if (result.isOk) {
-                showToast('✓ Staff berhasil dihapus!');
-            } else {
-                showToast('❌ Gagal menghapus staff', 'error');
+            if (user) {
+                if (confirm(`Hapus staff "${user.name || user.username}"?`)) {
+                    const result = await window.dataSdk.delete(user);
+                    if (result.isOk) {
+                        showToast('✓ Staff berhasil dihapus!');
+                    } else {
+                        showToast('❌ Gagal menghapus staff', 'error');
+                    }
+                }
             }
         };
 
@@ -2119,93 +2114,7 @@ async function loadDataFromSupabase() {
             if (tabVehicle) tabVehicle.addEventListener('click', switchToVehicleDataTab);
             if (tabChecklist) tabChecklist.addEventListener('click', switchToChecklistTab);
             
-            // Check if user has active inspection and restore it
-            if (currentUser && currentUserActiveInspection) {
-                console.log('⚡ Found active inspection for user, restoring...');
-                restoreUserActiveInspection();
-            }
-            
             console.log('✓ Inspection system ready');
-        }
-
-        function restoreUserActiveInspection() {
-            try {
-                const active = currentUserActiveInspection;
-                inspectionFormData = JSON.parse(active.formData || '{}');
-                inspectionItemsData = JSON.parse(active.itemsData || '{}');
-                inspectionStep = 1;
-                
-                // Restore form fields
-                document.getElementById('customerName').value = inspectionFormData.customerName || '';
-                document.getElementById('customerPhone').value = inspectionFormData.customerPhone || '';
-                document.getElementById('vehicleType').value = inspectionFormData.vehicleType || '';
-                document.getElementById('vehiclePlate').value = inspectionFormData.vehiclePlate || '';
-                document.getElementById('vehicleYear').value = inspectionFormData.vehicleYear || '';
-                document.getElementById('vehicleColor').value = inspectionFormData.vehicleColor || '';
-                document.getElementById('vehicleTransmission').value = inspectionFormData.vehicleTransmission || '';
-                document.getElementById('vehicleFuel').value = inspectionFormData.vehicleFuel || '';
-                document.getElementById('vehicleMileage').value = inspectionFormData.vehicleMileage || '';
-                
-                // Show active inspection UI
-                document.getElementById('startNewInspectionBtn').classList.add('hidden');
-                document.getElementById('inspectionNavTabs').classList.remove('hidden');
-                document.getElementById('vehicleDataSection').classList.add('hidden');
-                document.getElementById('activeInspectionSection').classList.remove('hidden');
-                document.getElementById('emptyInspectionState').classList.add('hidden');
-                
-                renderInspectionItems();
-                updateTabUI('checklist');
-                saveUserActiveInspection();
-                
-                showToast('📋 Inspeksi dilanjutkan dari yang sebelumnya');
-                console.log('✓ Active inspection restored');
-            } catch (e) {
-                console.error('❌ Error restoring inspection:', e);
-            }
-        }
-
-        async function saveUserActiveInspection() {
-            if (!currentUser || !inspectionFormData || inspectionStep !== 1) {
-                return;
-            }
-            
-            if (!currentUserActiveInspection) {
-                // Create new active inspection record
-                const activeInspection = {
-                    type: 'sheet_active_inspections',
-                    id: 'active_' + Date.now(),
-                    activeInspectionId: 'active_' + Date.now(),
-                    inspectorUsername: currentUser.username,
-                    vehicleType: inspectionFormData.vehicleType,
-                    vehiclePlate: inspectionFormData.vehiclePlate,
-                    formData: JSON.stringify(inspectionFormData),
-                    itemsData: JSON.stringify(inspectionItemsData),
-                    createdAt: new Date().toISOString(),
-                    updatedAt: new Date().toISOString()
-                };
-                
-                console.log('💾 Creating new active inspection:', activeInspection.activeInspectionId);
-                const result = await window.dataSdk.create(activeInspection);
-                if (result.isOk) {
-                    console.log('✓ Active inspection created');
-                }
-            } else {
-                // Update existing active inspection
-                const updatedInspection = {
-                    ...currentUserActiveInspection,
-                    vehicleType: inspectionFormData.vehicleType,
-                    vehiclePlate: inspectionFormData.vehiclePlate,
-                    formData: JSON.stringify(inspectionFormData),
-                    itemsData: JSON.stringify(inspectionItemsData),
-                    updatedAt: new Date().toISOString()
-                };
-                
-                console.log('🔄 Updating active inspection:', updatedInspection.activeInspectionId);
-                const result = await window.dataSdk.update(updatedInspection);
-                if (result.isOk) {
-                    console.log('✓ Active inspection updated');
-                }
-            }
         }
 
         function startNewInspection() {
@@ -2273,7 +2182,6 @@ async function loadDataFromSupabase() {
             }
             
             updateTabUI('checklist');
-            saveUserActiveInspection();
         }
 
         function updateTabUI(activeTab) {
@@ -2353,7 +2261,6 @@ async function loadDataFromSupabase() {
             console.log('Rendering inspection items...');
             renderInspectionItems();
             updateTabUI('checklist');
-            saveUserActiveInspection();
             
             console.log('✓ Step 2 ready - checklist items visible');
             showToast('✓ Lanjut ke checklist item inspeksi');
@@ -2588,7 +2495,6 @@ async function loadDataFromSupabase() {
             }
             
             updateProgressBar();
-            saveUserActiveInspection();
             lucide.createIcons();
         }
 
@@ -2608,7 +2514,6 @@ async function loadDataFromSupabase() {
             }
             
             updateProgressBar();
-            saveUserActiveInspection();
             lucide.createIcons();
         }
 
@@ -2646,7 +2551,6 @@ async function loadDataFromSupabase() {
                         }
                         
                         updateProgressBar();
-                        saveUserActiveInspection();
                         lucide.createIcons();
                         showToast(`✓ ${files.length} foto ditambahkan!`);
                     }
@@ -2670,7 +2574,6 @@ async function loadDataFromSupabase() {
             }
             
             updateProgressBar();
-            saveUserActiveInspection();
             lucide.createIcons();
         };
 
@@ -2771,23 +2674,13 @@ async function loadDataFromSupabase() {
                     console.log('[6] Result data:', result.data);
                     btn.disabled = false;
                     btn.innerHTML = originalHTML;
-                    
-                    // Delete active inspection after successful submission
-                    if (currentUserActiveInspection) {
-                        console.log('[7] Deleting active inspection...');
-                        const deleteResult = await window.dataSdk.delete(currentUserActiveInspection);
-                        if (deleteResult.isOk) {
-                            console.log('✓ Active inspection deleted');
-                        }
-                    }
-                    
                     showToast('✓ Inspeksi berhasil disimpan!');
                     
-                    console.log('[8] Waiting 300ms before showing report...');
+                    console.log('[7] Waiting 300ms before showing report...');
                     setTimeout(() => {
-                        console.log('[9] Calling showReportModal()...');
+                        console.log('[8] Calling showReportModal()...');
                         showReportModal(record);
-                        console.log('[10] showReportModal() completed');
+                        console.log('[9] showReportModal() completed');
                     }, 300);
                 } else {
                     console.error('❌ [ERROR-5] Save failed');
@@ -2846,7 +2739,6 @@ async function loadDataFromSupabase() {
             inspectionStep = 0;
             inspectionFormData = null;
             inspectionItemsData = {};
-            currentUserActiveInspection = null;
             
             document.getElementById('inspectionNavTabs').classList.add('hidden');
             document.getElementById('vehicleDataSection').classList.add('hidden');
@@ -2876,33 +2768,17 @@ async function loadDataFromSupabase() {
         }
 
         function cancelInspection() {
-            if (currentUserActiveInspection) {
-                // If there's an active inspection, just go back to main view
-                inspectionStep = 0;
-                inspectionFormData = null;
-                inspectionItemsData = {};
-                
-                document.getElementById('inspectionNavTabs').classList.add('hidden');
-                document.getElementById('vehicleDataSection').classList.add('hidden');
-                document.getElementById('activeInspectionSection').classList.add('hidden');
-                document.getElementById('emptyInspectionState').classList.remove('hidden');
-                document.getElementById('startNewInspectionBtn').classList.remove('hidden');
-                
-                showToast('📋 Kembali ke menu inspeksi');
-            } else {
-                // No active inspection, just clear and go back
-                inspectionStep = 0;
-                inspectionFormData = null;
-                inspectionItemsData = {};
-                
-                document.getElementById('inspectionNavTabs').classList.add('hidden');
-                document.getElementById('vehicleDataSection').classList.add('hidden');
-                document.getElementById('activeInspectionSection').classList.add('hidden');
-                document.getElementById('emptyInspectionState').classList.remove('hidden');
-                document.getElementById('startNewInspectionBtn').classList.remove('hidden');
-                
-                showToast('Inspeksi dibatalkan');
-            }
+            inspectionStep = 0;
+            inspectionFormData = null;
+            inspectionItemsData = {};
+            
+            document.getElementById('inspectionNavTabs').classList.add('hidden');
+            document.getElementById('vehicleDataSection').classList.add('hidden');
+            document.getElementById('activeInspectionSection').classList.add('hidden');
+            document.getElementById('emptyInspectionState').classList.remove('hidden');
+            document.getElementById('startNewInspectionBtn').classList.remove('hidden');
+            
+            showToast('Inspeksi dibatalkan');
         }
 
         
@@ -2913,17 +2789,7 @@ async function loadDataFromSupabase() {
 
             list.innerHTML = '';
             
-            // Filter inspections based on user role
-            let filteredInspections = [];
-            if (currentUser && currentUser.role === 'admin') {
-                // Admin sees all inspections
-                filteredInspections = allInspections;
-            } else if (currentUser && currentUser.role === 'inspector') {
-                // Inspector sees only their own inspections
-                filteredInspections = allInspections.filter(i => i.inspectorUsername === currentUser.username);
-            }
-            
-            if (filteredInspections.length === 0) {
+            if (allInspections.length === 0) {
                 list.innerHTML = `
                     <div class="col-span-full">
                         <div class="relative overflow-hidden rounded-2xl shadow-lg bg-gradient-to-br from-blue-600 via-cyan-600 to-blue-700 p-12 text-center text-white">
@@ -2931,10 +2797,10 @@ async function loadDataFromSupabase() {
                             <div class="relative z-10">
                                 <div class="mb-4 text-6xl">📋</div>
                                 <h3 class="text-3xl font-black mb-2">Belum Ada Riwayat</h3>
-                                <p class="text-white/90 mb-6">${currentUser && currentUser.role === 'admin' ? 'Belum ada inspeksi dari tim' : 'Mulai inspeksi kendaraan untuk melihat riwayatnya di sini'}</p>
+                                <p class="text-white/90 mb-6">Mulai inspeksi kendaraan untuk melihat riwayatnya di sini</p>
                                 <button onclick="switchView('inspectionView')" class="inline-flex items-center gap-2 px-6 py-3 bg-white text-blue-700 rounded-xl font-bold transition-all transform hover:scale-105 shadow-lg">
                                     <i data-lucide="play-circle" style="width: 20px; height: 20px;"></i>
-                                    <span>${currentUser && currentUser.role === 'admin' ? 'Lihat Manual' : 'Mulai Inspeksi Pertama'}</span>
+                                    <span>Mulai Inspeksi Pertama</span>
                                 </button>
                             </div>
                         </div>
@@ -2944,7 +2810,7 @@ async function loadDataFromSupabase() {
                 return;
             }
 
-            filteredInspections.slice().reverse().forEach(inspection => {
+            allInspections.slice().reverse().forEach(inspection => {
                 const inspDate = new Date(inspection.inspectionDate);
                 const formattedDate = inspDate.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
                 const formattedTime = inspDate.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
@@ -3235,19 +3101,26 @@ async function loadDataFromSupabase() {
             
             generateAndShowReport(inspection);
         };
-		 
+        if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', async () => {
+        console.log('🚀 Application initialized');
+
+        await loadInitialData(); // 🔥 TAMBAHKAN INI
+
         lucide.createIcons();
-initInspectionSystem();
-		 
-		 function updateDashboard() {}
-function renderItems() {}
-function renderStaff() {}
-function renderCategories() {}
-function renderCategoryFilterDropdown() {}
-function renderInspectionHistory() {}
+        initInspectionSystem();
+    });
+} else {
+    console.log('🚀 Application initialized (already loaded)');
+
+    await loadInitialData(); // 🔥 TAMBAHKAN INI
+
+    lucide.createIcons();
+    initInspectionSystem();
+}
     </script>
     </div>
    </div>
   </div>
- <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9e8742e5c5809c45',t:'MTc3NTU0NjMzOC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9e87def826b50b95',t:'MTc3NTU1MjczMS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
