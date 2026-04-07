@@ -724,14 +724,6 @@ function getTable(type) {
 }
 		 
 
-		 async function testSupabase() {
-  const { data, error } = await supabase
-    .from('users')
-    .select('*');
-
-  console.log("TEST RESULT:", data, error);
-}
-
 testSupabase();
 		 
         function showToast(message, type = 'success') {
