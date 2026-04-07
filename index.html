@@ -697,10 +697,18 @@ console.log("✅ Supabase client:", supabaseClient);
   }
 };
 function getTable(type) {
-  if (type === 'user') return 'users';
-  if (type === 'inspection') return 'inspections';
-  if (type === 'category') return 'categories';
-  if (type === 'item') return 'items';
+  const map = {
+    user: 'users',
+    sheet_users: 'users',
+    inspection: 'inspections',
+    sheet_inspections: 'inspections',
+    category: 'categories',
+    sheet_categories: 'categories',
+    item: 'items',
+    sheet_items: 'items'
+  };
+
+  return map[type];
 }
 
 		 async function loadInitialData() {
