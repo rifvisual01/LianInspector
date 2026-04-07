@@ -3105,7 +3105,7 @@ testSupabase();
     document.addEventListener('DOMContentLoaded', async () => {
         console.log('🚀 Application initialized');
 
-        await loadInitialData(); // 🔥 TAMBAHKAN INI
+        await loadInitialData(); // ✅ aman
 
         lucide.createIcons();
         initInspectionSystem();
@@ -3113,10 +3113,10 @@ testSupabase();
 } else {
     console.log('🚀 Application initialized (already loaded)');
 
-    await loadInitialData(); // 🔥 TAMBAHKAN INI
-
-    lucide.createIcons();
-    initInspectionSystem();
+    loadInitialData().then(() => { // ✅ GANTI JADI INI
+        lucide.createIcons();
+        initInspectionSystem();
+    });
 }
     </script>
     </div>
