@@ -707,12 +707,6 @@ function getTable(type) {
   sheetInspections = inspections || [];
 }
 		 
-        (async () => {
-            const initResult = await window.dataSdk.init(dataHandler);
-            if (!initResult.isOk) {
-                showToast('Error initializing data system', 'error');
-            }
-        })();
 
 		 async function testSupabase() {
   const { data, error } = await supabase
