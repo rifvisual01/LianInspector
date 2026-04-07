@@ -1,0 +1,3251 @@
+<!doctype html>
+<html lang="en">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vehicle Inspection System</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <script src="/_sdk/data_sdk.js"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif; font-size: 14px; }
+        /* Modals Override - Maximum Priority */
+        #reportModal, #staffModal {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            z-index: 999999 !important;
+            background: rgba(0, 0, 0, 0.8) !important;
+            backdrop-filter: blur(6px) !important;
+            padding: 16px !important;
+            align-items: center !important;
+            justify-content: center !important;
+            overflow-y: auto !important;
+            display: none;
+            visibility: hidden;
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        #reportModal.active, #staffModal.active {
+            display: flex !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            pointer-events: auto !important;
+        }
+        
+        #reportModal > div, #staffModal > div {
+            position: relative !important;
+            z-index: 1000000 !important;
+            width: 100% !important;
+            max-width: 42rem !important;
+            max-height: 90vh !important;
+            height: auto !important;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4) !important;
+            transform: scale(1) !important;
+            display: flex !important;
+            flex-direction: column !important;
+            overflow: visible !important;
+            background: rgba(255, 255, 255, 0.95) !important;
+            border-radius: 16px !important;
+            padding: 24px !important;
+            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        }
+        
+        #reportContent {
+            overflow-y: auto !important;
+            max-height: calc(90vh - 160px) !important;
+            display: block !important;
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+        .gradient-modern { background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%); }
+        .bg-modern { background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); }
+        .card-modern { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade-in { animation: fadeInUp 0.6s ease-out; }
+        @keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-20px); } }
+        .animate-float { animation: float 4s ease-in-out infinite; }
+    </style>
+  <style>body { box-sizing: border-box; }</style>
+ </head>
+ <body class="bg-modern">
+  <div class="app-wrapper h-full w-full flex flex-col">
+   <!-- Login Screen -->
+   <div id="loginScreen" class="w-full h-full flex items-center justify-center p-4">
+    <div class="w-full max-w-md animate-fade-in">
+     <div class="card-modern rounded-3xl shadow-2xl p-8 space-y-8 border border-white/20">
+      <div class="flex flex-col items-center justify-center mb-6">
+       <div class="flex items-center gap-1"><i data-lucide="truck" style="width: 48px; height: 48px; color: #1e40af; stroke-width: 1.5;"></i>
+        <h1 class="text-3xl font-black text-blue-700" style="letter-spacing: -0.5px;">AutoCheck</h1>
+       </div>
+      </div><!-- Admin Setup or Login -->
+      <div id="setupOrLogin" class="space-y-3">
+       <div class="flex gap-3">
+        <button id="showAdminSetupBtn" class="flex-1 bg-gradient-to-r from-blue-700 to-blue-800 hover:from-blue-800 hover:to-blue-900 text-white font-bold py-3 rounded-xl transition-all transform hover:scale-105 shadow-lg text-sm">Setup Admin</button> <button id="showLoginBtn" class="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold py-3 rounded-xl transition-all transform hover:scale-105 shadow-lg text-sm">Login</button>
+       </div>
+       <div id="quickLoginDivider" class="hidden text-center py-2">
+        <p class="text-gray-600 text-xs font-semibold">ATAU LOGIN DENGAN AKUN LAIN</p>
+       </div>
+       <div id="quickLoginList" class="space-y-2"></div>
+      </div><!-- Admin Setup Form -->
+      <div id="adminSetupForm" class="hidden space-y-6">
+       <div class="mb-6">
+        <div class="flex items-center gap-3 mb-3">
+         <i data-lucide="shield-check" style="width: 28px; height: 28px; color: #059669;"></i>
+         <h2 class="text-2xl font-black text-gray-900">Buat Akun Admin</h2>
+        </div>
+        <p class="text-sm text-gray-600 ml-10">Amankan sistem dengan akun administrator pertama Anda</p>
+       </div>
+       <div class="space-y-4">
+        <div class="relative">
+         <label class="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide">Username Admin</label>
+         <div class="relative">
+          <i data-lucide="user" style="width: 18px; height: 18px; color: #3b82f6;" class="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none"></i> <input id="adminUsername" type="text" placeholder="Masukkan username" class="w-full pl-12 pr-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all font-medium text-sm">
+         </div>
+        </div>
+        <div class="relative">
+         <label class="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide">Password</label>
+         <div class="relative">
+          <i data-lucide="lock" style="width: 18px; height: 18px; color: #3b82f6;" class="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none"></i> <input id="adminPassword" type="password" placeholder="Masukkan password yang kuat" class="w-full pl-12 pr-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all font-medium text-sm">
+         </div>
+        </div>
+       </div>
+       <div class="bg-gradient-to-r from-emerald-50 to-cyan-50 border-2 border-emerald-200 rounded-xl p-4 space-y-2">
+        <p class="text-xs font-bold text-emerald-800 flex items-center gap-2"><i data-lucide="check-circle-2" style="width: 16px; height: 16px;"></i>Tips Keamanan:</p>
+        <ul class="text-xs text-emerald-700 space-y-1 ml-6 list-disc">
+         <li>Gunakan password yang kuat (kombinasi huruf, angka, simbol)</li>
+         <li>Jangan bagikan credentials dengan orang lain</li>
+         <li>Ganti password secara berkala</li>
+        </ul>
+       </div>
+       <div class="flex gap-3">
+        <button id="backToMenuBtn" class="flex-1 px-4 py-3 border-2 border-gray-300 rounded-xl text-gray-700 hover:bg-gray-100 transition-all font-bold text-sm uppercase tracking-wide">Batal</button><button id="createAdminBtn" class="flex-1 px-4 py-3 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white rounded-xl transition-all font-bold text-sm uppercase tracking-wide shadow-lg transform hover:scale-105 active:scale-95">Buat Admin</button>
+       </div>
+      </div><!-- Login Form -->
+      <div id="loginForm" class="hidden space-y-4">
+       <div class="space-y-4">
+        <div class="relative"><label class="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide">Username</label>
+         <div class="relative"><i data-lucide="user" style="width: 18px; height: 18px; color: #3b82f6;" class="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none"></i> <input id="loginUsername" type="text" placeholder="Masukkan username Anda" class="w-full pl-12 pr-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all font-medium text-sm placeholder-gray-400">
+         </div>
+        </div>
+        <div class="relative"><label class="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide">Password</label>
+         <div class="relative"><i data-lucide="lock" style="width: 18px; height: 18px; color: #3b82f6;" class="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none"></i> <input id="loginPassword" type="password" placeholder="Masukkan password Anda" class="w-full pl-12 pr-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all font-medium text-sm placeholder-gray-400">
+         </div>
+        </div>
+       </div>
+       <div class="bg-gradient-to-r from-blue-50 to-cyan-50 border-2 border-blue-200 rounded-xl p-4">
+        <p class="text-xs font-semibold text-blue-900 flex items-center gap-2 mb-2"><i data-lucide="info" style="width: 16px; height: 16px;"></i>💡 Tips Login:</p>
+        <ul class="text-xs text-blue-800 space-y-1 ml-6 list-disc">
+         <li>Pastikan username dan password benar</li>
+         <li>Gunakan password yang telah diberikan oleh admin</li>
+        </ul>
+       </div>
+       <div class="flex gap-3"><button id="backToMenuBtn2" class="flex-1 px-4 py-3 border-2 border-gray-300 rounded-xl text-gray-700 hover:bg-gray-100 transition-all font-bold text-sm uppercase tracking-wide">Batal</button> <button id="loginBtn" class="flex-1 px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl transition-all font-bold text-sm uppercase tracking-wide shadow-lg transform hover:scale-105 active:scale-95">Masuk</button>
+       </div>
+      </div>
+      <div id="loginMessage" class="hidden p-4 rounded-lg text-sm font-medium"></div>
+     </div>
+    </div>
+   </div><!-- Main App Screen -->
+   <div id="mainScreen" class="hidden w-full h-full flex flex-col">
+    <!-- Header -->
+    <header class="gradient-modern text-white shadow-lg">
+     <div class="flex items-center justify-between p-3 md:px-4"><button id="menuBtn" class="lg:hidden p-2 hover:bg-white/20 rounded-lg transition-all"><i data-lucide="menu" style="width: 20px; height: 20px;"></i></button>
+      <h1 class="text-lg font-bold flex-1 text-center lg:text-left">AutoCheck</h1><button id="logoutBtn" class="p-2 hover:bg-white/20 rounded-lg transition-all flex items-center gap-2"><span class="hidden sm:inline text-xs font-semibold">Logout</span><i data-lucide="log-out" style="width: 18px; height: 18px;"></i></button>
+     </div>
+    </header><!-- Main Content Area -->
+    <div class="flex flex-1 overflow-hidden">
+     <!-- Sidebar Navigation -->
+     <aside id="sidebar" class="fixed lg:static left-0 top-16 lg:top-0 w-64 h-screen lg:h-full bg-gradient-to-b from-gray-900 to-gray-800 text-white transform -translate-x-full lg:translate-x-0 transition-transform z-40 overflow-y-auto shadow-2xl">
+      <nav class="p-4 space-y-2">
+       <div id="navMenu"></div>
+      </nav>
+      <hr class="my-4 border-gray-700">
+      <div class="px-2 py-2">
+       <p class="text-xs font-semibold text-gray-400 uppercase mb-3">Admin Only</p><button id="categoryMenuBtn" class="w-full text-left px-4 py-3 rounded-lg hover:bg-slate-800 transition-all flex items-center gap-3 text-slate-300 hover:text-white hidden"><i data-lucide="folder" style="width: 20px; height: 20px;"></i><span>Kategori Inspeksi</span></button>
+      </div>
+     </aside><!-- Overlay for mobile -->
+     <div id="sidebarOverlay" class="fixed inset-0 bg-black/50 lg:hidden hidden z-30"></div><!-- Main Content -->
+     <main class="flex-1 overflow-auto bg-gradient-to-br from-gray-50 via-white to-gray-50">
+      <div class="p-4 sm:p-6 md:p-8 w-full">
+       <div class="w-full">
+        <!-- Dashboard -->
+        <div id="dashboardView" class="space-y-6"><!-- Header Section -->
+         <div class="mb-6">
+          <div class="inline-flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-blue-50 via-blue-50 to-cyan-50 border-2 border-blue-200 shadow-sm">
+           <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-blue-600 to-blue-700 shadow-md">
+            <i data-lucide="gauge" style="width: 20px; height: 20px; color: white;"></i>
+           </div>
+           <div>
+            <h2 class="text-xl font-black text-gray-900 leading-tight">Dashboard</h2>
+            <p class="text-xs text-gray-600 font-semibold">Statistik &amp; ringkasan sistem</p>
+           </div>
+           <div class="ml-auto flex items-center gap-1 px-3 py-1.5 rounded-lg bg-green-100 border border-green-300">
+            <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div><span class="text-xs font-bold text-green-700">Live</span>
+           </div>
+          </div><!-- Inspections Card -->
+          <div id="dashboardInspectionsCard" class="group relative overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer">
+           <div class="absolute inset-0 bg-gradient-to-br from-purple-500 via-purple-600 to-purple-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+           <div class="relative card-modern rounded-2xl p-6 backdrop-blur-xl bg-white/95 border border-white/30 group-hover:bg-white/10 transition-all duration-300">
+            <div class="flex items-start justify-between mb-6">
+             <div class="flex-1">
+              <p class="text-gray-600 text-xs font-bold uppercase tracking-widest group-hover:text-white/80 transition-colors">📋 Total Inspections</p>
+              <p id="totalInspections" class="text-5xl font-black text-purple-600 mt-3 group-hover:text-white transition-colors">0</p>
+              <p class="text-xs text-gray-500 mt-2 group-hover:text-white/60 transition-colors">Completed Reports</p>
+             </div>
+             <div class="p-4 rounded-2xl bg-gradient-to-br from-purple-100 to-purple-50 group-hover:from-white/20 group-hover:to-white/10 transition-all duration-300"><i data-lucide="file-check" style="width: 32px; height: 32px; color: currentColor;" class="text-purple-600 group-hover:text-white transition-colors"></i>
+             </div>
+            </div>
+            <div class="h-1 bg-gray-200 rounded-full overflow-hidden group-hover:bg-white/20 transition-all">
+             <div class="h-full bg-gradient-to-r from-purple-400 to-purple-600 w-1/3"></div>
+            </div>
+           </div>
+          </div>
+         </div><!-- Stats Grid -->
+         <div class="grid grid-cols-1 md:grid-cols-3 gap-5"><!-- Users Card -->
+          <div class="group relative overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer">
+           <div class="absolute inset-0 bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+           <div class="relative card-modern rounded-2xl p-6 backdrop-blur-xl bg-white/95 border border-white/30 group-hover:bg-white/10 transition-all duration-300">
+            <div class="flex items-start justify-between mb-6">
+             <div class="flex-1">
+              <p class="text-gray-600 text-xs font-bold uppercase tracking-widest group-hover:text-white/80 transition-colors">👥 Total Users</p>
+              <p id="totalUsers" class="text-5xl font-black text-blue-600 mt-3 group-hover:text-white transition-colors">0</p>
+              <p class="text-xs text-gray-500 mt-2 group-hover:text-white/60 transition-colors">Active Team Members</p>
+             </div>
+             <div class="p-4 rounded-2xl bg-gradient-to-br from-blue-100 to-blue-50 group-hover:from-white/20 group-hover:to-white/10 transition-all duration-300"><i data-lucide="users" style="width: 32px; height: 32px; color: currentColor;" class="text-blue-600 group-hover:text-white transition-colors"></i>
+             </div>
+            </div>
+            <div class="h-1 bg-gray-200 rounded-full overflow-hidden group-hover:bg-white/20 transition-all">
+             <div class="h-full bg-gradient-to-r from-blue-400 to-blue-600 w-3/4"></div>
+            </div>
+           </div>
+          </div><!-- Categories Card -->
+          <div class="group relative overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer">
+           <div class="absolute inset-0 bg-gradient-to-br from-emerald-500 via-emerald-600 to-emerald-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+           <div class="relative card-modern rounded-2xl p-6 backdrop-blur-xl bg-white/95 border border-white/30 group-hover:bg-white/10 transition-all duration-300">
+            <div class="flex items-start justify-between mb-6">
+             <div class="flex-1">
+              <p class="text-gray-600 text-xs font-bold uppercase tracking-widest group-hover:text-white/80 transition-colors">📁 Categories</p>
+              <p id="totalCategories" class="text-5xl font-black text-emerald-600 mt-3 group-hover:text-white transition-colors">0</p>
+              <p class="text-xs text-gray-500 mt-2 group-hover:text-white/60 transition-colors">Inspection Categories</p>
+             </div>
+             <div class="p-4 rounded-2xl bg-gradient-to-br from-emerald-100 to-emerald-50 group-hover:from-white/20 group-hover:to-white/10 transition-all duration-300"><i data-lucide="folder" style="width: 32px; height: 32px; color: currentColor;" class="text-emerald-600 group-hover:text-white transition-colors"></i>
+             </div>
+            </div>
+            <div class="h-1 bg-gray-200 rounded-full overflow-hidden group-hover:bg-white/20 transition-all">
+             <div class="h-full bg-gradient-to-r from-emerald-400 to-emerald-600 w-2/3"></div>
+            </div>
+           </div>
+          </div><!-- Items Card -->
+          <div class="group relative overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer">
+           <div class="absolute inset-0 bg-gradient-to-br from-cyan-500 via-cyan-600 to-cyan-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+           <div class="relative card-modern rounded-2xl p-6 backdrop-blur-xl bg-white/95 border border-white/30 group-hover:bg-white/10 transition-all duration-300">
+            <div class="flex items-start justify-between mb-6">
+             <div class="flex-1">
+              <p class="text-gray-600 text-xs font-bold uppercase tracking-widest group-hover:text-white/80 transition-colors">✓ Inspection Items</p>
+              <p id="totalItems" class="text-5xl font-black text-cyan-600 mt-3 group-hover:text-white transition-colors">0</p>
+              <p class="text-xs text-gray-500 mt-2 group-hover:text-white/60 transition-colors">Total Checklist Items</p>
+             </div>
+             <div class="p-4 rounded-2xl bg-gradient-to-br from-cyan-100 to-cyan-50 group-hover:from-white/20 group-hover:to-white/10 transition-all duration-300"><i data-lucide="list-checks" style="width: 32px; height: 32px; color: currentColor;" class="text-cyan-600 group-hover:text-white transition-colors"></i>
+             </div>
+            </div>
+            <div class="h-1 bg-gray-200 rounded-full overflow-hidden group-hover:bg-white/20 transition-all">
+             <div class="h-full bg-gradient-to-r from-cyan-400 to-cyan-600 w-1/2"></div>
+            </div>
+           </div>
+          </div>
+         </div><!-- Quick Stats Section -->
+         <div class="grid grid-cols-1 md:grid-cols-2 gap-5"><!-- Quick Actions -->
+          <div class="card-modern rounded-2xl shadow-lg p-6 border border-gray-100 bg-gradient-to-br from-white via-blue-50/30 to-cyan-50/30">
+           <div class="flex items-center gap-3 mb-5">
+            <div class="p-3 rounded-xl bg-gradient-to-br from-blue-100 to-blue-50"><i data-lucide="zap" style="width: 24px; height: 24px; color: #1e40af;"></i>
+            </div>
+            <h4 class="font-bold text-gray-900">Quick Actions</h4>
+           </div>
+           <div class="space-y-2"><button onclick="switchView('inspectionView')" class="w-full text-left px-4 py-3 rounded-xl bg-gradient-to-r from-blue-50 to-cyan-50 hover:from-blue-100 hover:to-cyan-100 transition-all border border-blue-200 group">
+             <div class="flex items-center justify-between"><span class="font-semibold text-sm text-gray-900">Start New Inspection</span> <i data-lucide="arrow-right" style="width: 18px; height: 18px;" class="text-blue-600 group-hover:translate-x-1 transition-transform"></i>
+             </div></button> <button onclick="switchView('historyView')" class="w-full text-left px-4 py-3 rounded-xl bg-gradient-to-r from-purple-50 to-pink-50 hover:from-purple-100 hover:to-pink-100 transition-all border border-purple-200 group">
+             <div class="flex items-center justify-between"><span class="font-semibold text-sm text-gray-900">View History</span> <i data-lucide="arrow-right" style="width: 18px; height: 18px;" class="text-purple-600 group-hover:translate-x-1 transition-transform"></i>
+             </div></button>
+           </div>
+          </div><!-- System Info -->
+          <div class="card-modern rounded-2xl shadow-lg p-6 border border-gray-100 bg-gradient-to-br from-white via-emerald-50/30 to-teal-50/30">
+           <div class="flex items-center gap-3 mb-5">
+            <div class="p-3 rounded-xl bg-gradient-to-br from-emerald-100 to-emerald-50"><i data-lucide="info" style="width: 24px; height: 24px; color: #059669;"></i>
+            </div>
+            <h4 class="font-bold text-gray-900">System Status</h4>
+           </div>
+           <div class="space-y-3">
+            <div class="flex items-center justify-between p-3 rounded-lg bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200"><span class="text-xs font-semibold text-gray-900">Status</span> <span class="px-3 py-1 bg-green-500 text-white rounded-full text-xs font-bold">✓ Online</span>
+            </div>
+            <div class="flex items-center justify-between p-3 rounded-lg bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200"><span class="text-xs font-semibold text-gray-900">Version</span> <span class="text-xs font-bold text-gray-700">v1.0.0</span>
+            </div>
+            <div class="flex items-center justify-between p-3 rounded-lg bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200"><span class="text-xs font-semibold text-gray-900">Mode</span> <span id="userRoleDisplay" class="text-xs font-bold text-gray-700">-</span>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div><!-- Item Management View -->
+        <div id="itemsView" class="hidden space-y-6">
+         <div class="mb-6">
+          <div class="inline-flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-blue-50 via-blue-50 to-cyan-50 border-2 border-blue-200 shadow-sm">
+           <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-blue-600 to-blue-700 shadow-md">
+            <i data-lucide="list-checks" style="width: 20px; height: 20px; color: white;"></i>
+           </div>
+           <div>
+            <h2 class="text-xl font-black text-gray-900 leading-tight">Item Inspeksi</h2>
+            <p class="text-xs text-gray-600 font-semibold">Buat item pemeriksaan</p>
+           </div>
+          </div>
+         </div><!-- Empty State or Add Button Section -->
+         <div id="itemsEmptyState" class="block">
+          <div class="relative overflow-hidden rounded-2xl shadow-xl">
+           <!-- Animated Background -->
+           <div class="absolute inset-0 bg-gradient-to-br from-blue-600 via-cyan-600 to-blue-700"></div>
+           <div class="absolute -top-40 -right-40 w-80 h-80 bg-white/10 rounded-full blur-3xl animate-pulse"></div>
+           <div class="absolute -bottom-40 -left-40 w-80 h-80 bg-white/5 rounded-full blur-3xl animate-float"></div><!-- Content -->
+           <div class="relative p-8 text-center text-white">
+            <div class="mb-4 text-6xl animate-bounce" style="animation-duration: 2s;">
+             📋
+            </div>
+            <h3 class="text-2xl font-black mb-2">Belum Ada Item Inspeksi</h3>
+            <p class="text-white/90 mb-6">Mulai buat item untuk daftar pemeriksaan kendaraan</p><button id="addItemBtn" class="inline-flex items-center gap-2 px-6 py-3 bg-white text-blue-700 rounded-xl font-bold text-sm transition-all transform hover:scale-105 shadow-xl"> <i data-lucide="plus" style="width: 20px; height: 20px;"></i> <span>Buat Item Pertama</span> </button>
+           </div>
+          </div>
+         </div><!-- Items List Section (Hidden initially) -->
+         <div id="itemsListSection" class="hidden space-y-4"><!-- Filter & Add Button in One Row -->
+          <div class="flex items-center gap-3">
+           <div class="relative flex-1"><button id="categoryFilterBtn" class="w-full flex items-center justify-between px-4 py-3 rounded-lg font-semibold text-sm bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-md transition-all"> <span class="flex items-center gap-2"> <i data-lucide="filter" style="width: 18px; height: 18px;"></i> <span id="filterLabel">Semua Kategori</span> </span> <i data-lucide="chevron-down" style="width: 18px; height: 18px;" class="transition-transform" id="filterChevron"></i> </button>
+            <div id="categoryFilterDropdown" class="hidden absolute top-full left-0 mt-2 w-full bg-white border-2 border-gray-200 rounded-lg shadow-xl z-20 overflow-hidden">
+             <div class="max-h-80 overflow-y-auto"><button type="button" class="w-full text-left px-5 py-3 hover:bg-blue-50 transition-all border-b border-gray-100 font-semibold text-sm text-gray-900 flex items-center gap-2" onclick="filterByCategory(null)"> <i data-lucide="list" style="width: 16px; height: 16px; color: #3b82f6;"></i> Semua Kategori </button>
+              <div id="categoryFilterList"></div>
+             </div>
+            </div>
+           </div><button id="addItemBtn2" class="bg-gradient-to-r from-blue-700 to-blue-800 hover:from-blue-800 hover:to-blue-900 text-white px-6 py-3 rounded-lg flex items-center gap-2 transition-all transform hover:scale-105 shadow-lg font-bold text-sm whitespace-nowrap flex-shrink-0"><i data-lucide="plus" style="width: 20px; height: 20px;"></i>Tambah Item</button>
+          </div>
+          <div id="itemsList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+         </div>
+        </div><!-- Categories View -->
+        <div id="categoriesView" class="hidden space-y-6">
+         <div class="mb-6">
+          <div class="inline-flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-emerald-50 via-emerald-50 to-teal-50 border-2 border-emerald-200 shadow-sm">
+           <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-600 to-emerald-700 shadow-md">
+            <i data-lucide="folder-open" style="width: 20px; height: 20px; color: white;"></i>
+           </div>
+           <div>
+            <h2 class="text-xl font-black text-gray-900 leading-tight">Kategori Inspeksi</h2>
+            <p class="text-xs text-gray-600 font-semibold">Kelola pengelompokan item</p>
+           </div>
+          </div>
+         </div>
+         <div class="flex items-center justify-between">
+          <div></div><button id="addCategoryBtn" class="bg-gradient-to-r from-blue-700 to-blue-800 hover:from-blue-800 hover:to-blue-900 text-white px-4 py-2 rounded-xl flex items-center gap-2 transition-all transform hover:scale-105 shadow-lg font-bold text-sm"><i data-lucide="plus" style="width: 18px; height: 18px;"></i>Tambah Kategori</button>
+         </div>
+         <div id="categoriesList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+        </div><!-- Staff Management View -->
+        <div id="staffView" class="hidden space-y-6">
+         <div class="mb-6">
+          <div class="inline-flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-cyan-50 via-cyan-50 to-blue-50 border-2 border-cyan-200 shadow-sm">
+           <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-cyan-600 to-cyan-700 shadow-md">
+            <i data-lucide="users" style="width: 20px; height: 20px; color: white;"></i>
+           </div>
+           <div>
+            <h2 class="text-xl font-black text-gray-900 leading-tight">Kelola Staff</h2>
+            <p class="text-xs text-gray-600 font-semibold">Tambah, edit &amp; atur pengguna</p>
+           </div>
+          </div>
+         </div>
+         <div class="flex items-center justify-between">
+          <div></div><button id="addStaffBtn" class="bg-gradient-to-r from-blue-700 to-blue-800 hover:from-blue-800 hover:to-blue-900 text-white px-4 py-2 rounded-xl flex items-center gap-2 transition-all transform hover:scale-105 shadow-lg font-semibold text-sm"><i data-lucide="plus" style="width: 18px; height: 18px;"></i>Tambah Staff</button>
+         </div>
+         <div id="staffList" class="grid gap-4"></div>
+        </div><!-- Inspector Views -->
+        <div id="inspectionView" class="hidden space-y-6">
+         <div class="mb-6">
+          <div class="inline-flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-blue-50 via-blue-50 to-cyan-50 border-2 border-blue-200 shadow-sm">
+           <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-blue-600 to-blue-700 shadow-md">
+            <i data-lucide="search" style="width: 20px; height: 20px; color: white;"></i>
+           </div>
+           <div>
+            <h2 class="text-xl font-black text-gray-900 leading-tight">Mulai Inspeksi</h2>
+            <p class="text-xs text-gray-600 font-semibold">Evaluasi &amp; dokumentasikan kondisi</p>
+           </div>
+          </div>
+         </div><!-- Inspection Navigation Tabs -->
+         <div id="inspectionNavTabs" class="hidden flex gap-2 p-3 bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200 rounded-lg"><button id="tabVehicleData" class="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm transition-all bg-white border-2 border-blue-400 text-blue-700"> <i data-lucide="truck" style="width: 16px; height: 16px;"></i> <span>Data Kendaraan</span> </button> <button id="tabChecklist" class="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm transition-all border-2 border-gray-300 text-gray-600 hover:border-blue-400 hover:bg-blue-50"> <i data-lucide="list-checks" style="width: 16px; height: 16px;"></i> <span>Checklist Item</span> </button>
+         </div><!-- Inspection Header -->
+         <div class="flex flex-col gap-4 stagger-2">
+          <button id="startNewInspectionBtn" class="w-full bg-gradient-to-r from-blue-600 via-blue-700 to-cyan-600 hover:from-blue-700 hover:via-blue-800 hover:to-cyan-700 text-white px-8 py-4 rounded-2xl flex items-center justify-center gap-3 transition-all transform hover:scale-105 shadow-xl font-bold text-base"> <i data-lucide="play-circle" style="width: 24px; height: 24px; stroke-width: 2; color: white;"></i> <span>Mulai Inspeksi Baru</span></button><!-- Vehicle Data Form -->
+          <div id="vehicleDataSection" class="hidden card-modern rounded-lg shadow p-6 bg-gradient-to-br from-blue-50 to-cyan-50 border border-blue-200 space-y-4">
+           <div class="flex items-center gap-3 mb-4"><i data-lucide="truck" style="width: 24px; height: 24px; color: #1e40af;"></i>
+            <h3 class="text-sm font-bold text-gray-900">Data Inspeksi Kendaraan</h3>
+           </div><!-- Customer Info Section -->
+           <div class="space-y-3 pb-3 border-b border-blue-200">
+            <div><label class="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide">Nama Pemesan</label> <input id="customerName" type="text" placeholder="Nama lengkap pelanggan" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm">
+            </div>
+            <div><label class="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide">No. WhatsApp</label> <input id="customerPhone" type="tel" placeholder="08xx xxxx xxxx" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm">
+            </div>
+           </div><!-- Vehicle Info Section -->
+           <div class="space-y-3">
+            <div><label class="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide">Merk/Tipe Kendaraan</label> <input id="vehicleType" type="text" placeholder="mis: Toyota Avanza, Honda Civic" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm">
+            </div>
+            <div><label class="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide">No. Polisi</label> <input id="vehiclePlate" type="text" placeholder="mis: B 1234 ABC" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm uppercase">
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+             <div><label class="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide">Tahun</label> <input id="vehicleYear" type="number" placeholder="Tahun" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm" min="1990" max="2099">
+             </div>
+             <div><label class="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide">Warna</label> <input id="vehicleColor" type="text" placeholder="mis: Putih, Hitam, Merah" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm">
+             </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+             <div><label class="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide">Transmisi</label> <select id="vehicleTransmission" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"> <option value="">Pilih transmisi</option> <option value="Manual">Manual</option> <option value="Otomatis">Otomatis</option> <option value="CVT">CVT</option> </select>
+             </div>
+             <div><label class="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide">Bahan Bakar</label> <select id="vehicleFuel" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"> <option value="">Pilih bahan bakar</option> <option value="Bensin">Bensin</option> <option value="Diesel">Diesel</option> <option value="Hybrid">Hybrid</option> <option value="Listrik">Listrik</option> </select>
+             </div>
+            </div>
+            <div><label class="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide">Odometer (km)</label> <input id="vehicleMileage" type="number" placeholder="Kilometer saat inspeksi" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm" min="0">
+            </div>
+           </div><!-- Documents Section -->
+           <div class="bg-gradient-to-br from-purple-50 to-purple-50 rounded-lg border-l-4 border-purple-500 p-4 space-y-3">
+            <div class="flex items-center gap-2 mb-3">
+             <div class="w-6 h-6 rounded-full bg-purple-500 text-white flex items-center justify-center text-xs font-bold">
+              📄
+             </div>
+             <p class="text-xs font-bold text-gray-900 uppercase tracking-wider">Kelengkapan Dokumen</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3"><label class="flex items-center gap-3 cursor-pointer p-2 hover:bg-white/50 rounded-lg transition-all"> <input type="checkbox" id="doc_bpkb" class="w-4 h-4 text-purple-600 rounded focus:ring-2 focus:ring-purple-500"> <span class="text-sm font-medium text-gray-700">BPKB</span> </label> <label class="flex items-center gap-3 cursor-pointer p-2 hover:bg-white/50 rounded-lg transition-all"> <input type="checkbox" id="doc_stnk" class="w-4 h-4 text-purple-600 rounded focus:ring-2 focus:ring-purple-500"> <span class="text-sm font-medium text-gray-700">STNK</span> </label> <label class="flex items-center gap-3 cursor-pointer p-2 hover:bg-white/50 rounded-lg transition-all"> <input type="checkbox" id="doc_faktur" class="w-4 h-4 text-purple-600 rounded focus:ring-2 focus:ring-purple-500"> <span class="text-sm font-medium text-gray-700">Faktur</span> </label> <label class="flex items-center gap-3 cursor-pointer p-2 hover:bg-white/50 rounded-lg transition-all"> <input type="checkbox" id="doc_forma" class="w-4 h-4 text-purple-600 rounded focus:ring-2 focus:ring-purple-500"> <span class="text-sm font-medium text-gray-700">Form A</span> </label> <label class="flex items-center gap-3 cursor-pointer p-2 hover:bg-white/50 rounded-lg transition-all"> <input type="checkbox" id="doc_kir" class="w-4 h-4 text-purple-600 rounded focus:ring-2 focus:ring-purple-500"> <span class="text-sm font-medium text-gray-700">KIR</span> </label> <label class="flex items-center gap-3 cursor-pointer p-2 hover:bg-white/50 rounded-lg transition-all"> <input type="checkbox" id="doc_manual" class="w-4 h-4 text-purple-600 rounded focus:ring-2 focus:ring-purple-500"> <span class="text-sm font-medium text-gray-700">Buku Manual</span> </label> <label class="flex items-center gap-3 cursor-pointer p-2 hover:bg-white/50 rounded-lg transition-all col-span-1 md:col-span-2"> <input type="checkbox" id="doc_servis" class="w-4 h-4 text-purple-600 rounded focus:ring-2 focus:ring-purple-500"> <span class="text-sm font-medium text-gray-700">Buku Servis</span> </label>
+            </div>
+           </div><!-- Accessories Section -->
+           <div class="bg-gradient-to-br from-orange-50 to-orange-50 rounded-lg border-l-4 border-orange-500 p-4 space-y-3">
+            <div class="flex items-center gap-2 mb-3">
+             <div class="w-6 h-6 rounded-full bg-orange-500 text-white flex items-center justify-center text-xs font-bold">
+              🔧
+             </div>
+             <p class="text-xs font-bold text-gray-900 uppercase tracking-wider">Kelengkapan Aksesori</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3"><label class="flex items-center gap-3 cursor-pointer p-2 hover:bg-white/50 rounded-lg transition-all"> <input type="checkbox" id="acc_kunci_serep" class="w-4 h-4 text-orange-600 rounded focus:ring-2 focus:ring-orange-500"> <span class="text-sm font-medium text-gray-700">Kunci Serep</span> </label> <label class="flex items-center gap-3 cursor-pointer p-2 hover:bg-white/50 rounded-lg transition-all"> <input type="checkbox" id="acc_kunci_roda" class="w-4 h-4 text-orange-600 rounded focus:ring-2 focus:ring-orange-500"> <span class="text-sm font-medium text-gray-700">Kunci Roda</span> </label> <label class="flex items-center gap-3 cursor-pointer p-2 hover:bg-white/50 rounded-lg transition-all"> <input type="checkbox" id="acc_ban_serep" class="w-4 h-4 text-orange-600 rounded focus:ring-2 focus:ring-orange-500"> <span class="text-sm font-medium text-gray-700">Ban Serep</span> </label> <label class="flex items-center gap-3 cursor-pointer p-2 hover:bg-white/50 rounded-lg transition-all"> <input type="checkbox" id="acc_dongkrak" class="w-4 h-4 text-orange-600 rounded focus:ring-2 focus:ring-orange-500"> <span class="text-sm font-medium text-gray-700">Dongkrak</span> </label>
+            </div>
+           </div><!-- Action Buttons -->
+           <div class="flex gap-3 pt-2"><button id="cancelVehicleDataBtn" class="flex-1 px-4 py-2 border-2 border-gray-300 text-gray-700 hover:bg-gray-100 rounded-lg font-semibold transition-all text-sm">Batal</button> <button id="confirmVehicleDataBtn" class="flex-1 px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg font-semibold transition-all text-sm">Lanjut ke Inspeksi</button>
+           </div>
+          </div><!-- Active Inspection -->
+          <div id="activeInspectionSection" class="hidden space-y-4">
+           <!-- Progress Bar -->
+           <div class="card-modern rounded-lg shadow p-4 bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200">
+            <div class="flex items-center justify-between mb-2">
+             <p class="text-sm font-semibold text-gray-700">Progress Inspeksi</p><span id="progressText" class="text-sm font-bold text-blue-700">0 / 0</span>
+            </div>
+            <div class="w-full bg-gray-300 rounded-full h-3 overflow-hidden">
+             <div id="progressBar" class="bg-gradient-to-r from-green-500 to-emerald-600 h-full rounded-full transition-all duration-300" style="width: 0%"></div>
+            </div>
+            <p id="vehicleNameDisplay" class="text-xs text-gray-600 mt-3 font-medium">🚗 Kendaraan: -</p>
+           </div><!-- Categories Container -->
+           <div id="categoriesInspectionList" class="space-y-3"></div><!-- Submit Button -->
+           <div class="flex gap-3 sticky bottom-0 bg-gradient-to-t from-white via-white to-transparent pt-4 pb-2">
+            <button id="cancelInspectionBtn" class="flex-1 px-4 py-3 border-2 border-gray-300 text-gray-700 hover:bg-gray-100 rounded-lg font-semibold transition-all">Batalkan</button> <button id="submitInspectionBtn" class="flex-1 px-4 py-3 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-lg font-semibold transition-all transform hover:scale-105 shadow-lg flex items-center justify-center gap-2"><i data-lucide="check-circle" style="width: 18px; height: 18px;"></i>Submit Inspeksi</button>
+           </div>
+          </div><!-- Empty State -->
+          <div id="emptyInspectionState" class="card-modern rounded-2xl shadow-lg p-8 text-center border border-blue-200 bg-gradient-to-br from-blue-50 to-cyan-50">
+           <i data-lucide="truck" style="width: 48px; height: 48px; color: #1e40af; margin: 0 auto 16px;"></i>
+           <p class="text-gray-600 font-medium mb-3">Belum ada inspeksi yang dimulai</p>
+           <p class="text-gray-500 text-sm mb-4">Klik tombol "Inspeksi Baru" untuk memulai evaluasi kendaraan</p>
+          </div>
+         </div>
+        </div>
+       </div><!-- History View -->
+       <div id="historyView" class="hidden space-y-6 w-full">
+        <div class="mb-6">
+         <div class="inline-flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-blue-50 via-blue-50 to-cyan-50 border-2 border-blue-200 shadow-sm">
+          <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-blue-600 to-blue-700 shadow-md">
+           <i data-lucide="clock" style="width: 20px; height: 20px; color: white;"></i>
+          </div>
+          <div>
+           <h2 class="text-xl font-black text-gray-900 leading-tight">Riwayat Inspeksi</h2>
+           <p class="text-xs text-gray-600 font-semibold">Semua laporan yang diselesaikan</p>
+          </div>
+         </div>
+        </div>
+        <div id="inspectionHistoryList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 w-full"></div>
+       </div>
+      </div>
+     </main>
+    </div><!-- Modals --> <!-- Add Category Modal -->
+    <div id="categoryModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
+     <div class="card-modern rounded-3xl shadow-2xl p-8 w-full max-w-md border border-white/20 animate-fade-in">
+      <h3 class="text-2xl font-black text-gray-900 mb-6">Tambah Kategori Baru</h3><input id="categoryName" type="text" placeholder="Nama kategori (mis: Interior, Eksterior, Mesin)" class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl mb-6 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+      <div class="flex gap-3">
+       <button id="cancelCategoryBtn" class="flex-1 px-4 py-2 border-2 border-gray-300 rounded-xl text-gray-700 hover:bg-gray-100 transition-all font-semibold">Batal</button><button id="saveCategoryBtn" class="flex-1 px-4 py-2 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white rounded-xl transition-all font-semibold">Simpan</button>
+      </div>
+     </div>
+    </div><!-- Add Item Modal -->
+    <div id="itemModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 overflow-y-auto backdrop-blur-sm">
+     <div class="card-modern rounded-3xl shadow-2xl w-full max-w-lg my-8 animate-fade-in overflow-hidden">
+      <!-- Header with gradient -->
+      <div class="bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 p-6 text-white relative overflow-hidden">
+       <div class="absolute -right-16 -top-16 w-56 h-56 bg-white/10 rounded-full animate-pulse" style="animation-duration: 3s;"></div>
+       <div class="absolute -left-12 -bottom-12 w-40 h-40 bg-white/5 rounded-full" style="animation: float 4s ease-in-out infinite;"></div>
+       <style>
+         @keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-10px); } }
+         @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+         .field-input { transition: all 0.3s ease; }
+         .field-input:focus { transform: translateY(-2px); box-shadow: 0 8px 16px rgba(168, 85, 247, 0.2); }
+         .damage-tag { animation: slideIn 0.3s ease forwards; }
+         @keyframes slideIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
+       </style>
+       <div class="relative z-10">
+        <div class="flex items-center gap-3">
+         <div class="p-2.5 bg-white/20 rounded-lg backdrop-blur-md" style="animation: bounce 2s infinite;"><i data-lucide="plus-circle" style="width: 20px; height: 20px; color: white; stroke-width: 2;"></i>
+         </div>
+         <div>
+          <h3 id="itemModalTitle" class="text-lg font-bold tracking-tight">Tambah Item Inspeksi</h3>
+          <p class="text-sm text-white/80 font-medium">Buat checklist untuk proses inspeksi</p>
+         </div>
+        </div>
+       </div>
+      </div><!-- Form Content -->
+      <div class="p-8 space-y-6 bg-gradient-to-b from-white via-white to-gray-50">
+       <!-- Item Name -->
+       <div class="group"><label class="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide">Nama item</label>
+        <div class="relative">
+         <input id="itemName" type="text" placeholder="Contoh: Kursi Depan, Mesin, Ban Depan" class="field-input w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-sm font-semibold bg-gray-50 hover:bg-white">
+        </div>
+       </div><!-- Category with Autocomplete -->
+       <div class="group relative"><label class="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide">Kategori</label>
+        <div class="relative">
+         <input id="itemCategory" type="text" placeholder="Pilih atau buat kategori baru" class="field-input w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm font-semibold bg-gray-50 hover:bg-white"> <button id="categoryDropdownToggle" type="button" class="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-blue-600 transition-all hidden hover:bg-blue-50 rounded-lg"><i data-lucide="chevron-down" style="width: 16px; height: 16px;"></i></button>
+         <div id="categoryDropdown" class="autocomplete-dropdown hidden mt-2 absolute top-full left-0 right-0 bg-white border-2 border-blue-300 rounded-lg shadow-lg z-10 max-h-96 overflow-y-auto backdrop-blur-sm">
+          <style>
+            .autocomplete-item {
+              padding: 12px 16px;
+              cursor: pointer;
+              border-bottom: 1px solid #e5e7eb;
+              transition: all 0.2s ease;
+              font-weight: 500;
+              font-size: 15px;
+            }
+            .autocomplete-item:hover {
+              background-color: #eff6ff;
+              padding-left: 20px;
+            }
+            .autocomplete-item:last-child {
+              border-bottom: none;
+            }
+          </style>
+         </div>
+        </div><!-- Critical Level -->
+        <div class="group mt-4"><label class="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide">Tingkat Prioritas</label> <select id="itemCriticalLevel" class="w-full px-3 py-2 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-sm font-semibold bg-gray-50 hover:bg-white transition-all cursor-pointer"> <option value="Low">🟢 Rendah</option> <option value="Medium">🟡 Sedang</option> <option value="High">🟠 Tinggi</option> <option value="Critical">🔴 Kritis</option> </select>
+        </div><!-- Damage Types -->
+        <div class="group mt-4"><label class="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide">Jenis kerusakan</label>
+         <div id="damageList" class="hidden space-y-1 mb-2" data-empty="true"></div>
+         <div class="flex gap-2">
+          <div class="relative flex-1">
+           <i data-lucide="wrench" style="width: 14px; height: 14px; color: #3b82f6;" class="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i> <input id="newDamageInput" type="text" placeholder="Contoh: Lecet, Penyok, Pecah, Rusak" class="field-input w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm font-medium bg-gray-50 hover:bg-white">
+          </div><button id="addDamageBtn" type="button" class="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg font-bold text-sm transition-all transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl flex items-center gap-1.5 whitespace-nowrap"> <i data-lucide="plus" style="width: 15px; height: 15px; stroke-width: 3;"></i> <span>Tambah</span> </button>
+         </div>
+        </div>
+       </div><!-- Action Buttons -->
+       <div class="flex gap-3 bg-white border-t border-gray-200 px-8 py-4">
+        <button id="cancelItemBtn" class="flex-1 px-4 py-3 border-2 border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 hover:border-gray-400 transition-all font-bold text-sm uppercase tracking-wide transform hover:scale-105 active:scale-95">Batal</button> <button id="saveItemBtn" class="flex-1 px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg transition-all font-bold text-sm uppercase tracking-wide shadow-xl hover:shadow-2xl transform hover:scale-105 active:scale-95 flex items-center justify-center gap-2"> <i data-lucide="check-circle" style="width: 16px; height: 16px;"></i> <span>Simpan</span> </button>
+       </div>
+      </div>
+     </div><!-- Add Staff Modal -->
+     <div id="staffModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 overflow-y-auto backdrop-blur-sm">
+      <div class="card-modern rounded-3xl shadow-2xl p-8 w-full max-w-md my-8 border border-white/20 animate-fade-in">
+       <h3 id="staffModalTitle" class="text-2xl font-black text-gray-900 mb-6">Tambah Staff Baru</h3><!-- Admin Edit Warning -->
+       <div class="space-y-4">
+        <!-- Username -->
+        <div>
+         <label class="block text-sm font-semibold text-gray-700 mb-2">Username</label><input id="staffUsername" type="text" placeholder="Username" class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+        </div><!-- Password -->
+        <div>
+         <label class="block text-sm font-semibold text-gray-700 mb-2">Password</label><input id="staffPassword" type="password" placeholder="Password" class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+        </div><!-- Role -->
+        <div id="staffRoleContainer">
+         <label class="block text-sm font-semibold text-gray-700 mb-2">Role</label><select id="staffRole" class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"><option value="inspector">Inspector</option><option value="admin">Admin</option></select>
+        </div>
+       </div>
+       <div class="flex gap-3 mt-6">
+        <button id="cancelStaffBtn" class="flex-1 px-4 py-2 border-2 border-gray-300 rounded-xl text-gray-700 hover:bg-gray-100 transition-all font-semibold">Batal</button><button id="saveStaffBtn" class="flex-1 px-4 py-2 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white rounded-xl transition-all font-semibold">Simpan</button>
+       </div>
+      </div>
+     </div><!-- Toast Messages -->
+     <div id="toast" class="fixed bottom-4 right-4 bg-green-600 text-white px-6 py-3 rounded-xl shadow-lg hidden z-50 flex items-center gap-2 font-semibold">
+      <i data-lucide="check-circle" style="width: 20px; height: 20px;"></i><span id="toastMessage"></span>
+     </div><!-- Report Modal -->
+     <div id="reportModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 overflow-y-auto backdrop-blur-sm">
+      <div class="card-modern rounded-2xl shadow-2xl p-6 w-full max-w-2xl my-8 border border-white/20 animate-fade-in">
+       <div class="flex items-center justify-between mb-6">
+        <h2 class="text-2xl font-bold text-gray-900">📋 Laporan Inspeksi</h2><button id="closeReportBtn" class="p-2 hover:bg-gray-200 rounded-lg transition-all"><i data-lucide="x" style="width: 24px; height: 24px;"></i></button>
+       </div><!-- Report Content -->
+       <div id="reportContent" class="space-y-4 max-h-96 overflow-y-auto"></div><!-- Report Actions -->
+       <div class="flex gap-3 mt-6 pt-4 border-t border-gray-200">
+        <button id="printReportBtn" class="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-all"><i data-lucide="printer" style="width: 18px; height: 18px;"></i>Cetak</button> <button id="downloadReportBtn" class="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-all"><i data-lucide="download" style="width: 18px; height: 18px;"></i>Download</button> <button id="closeReportBtnAction" class="flex-1 px-4 py-2 border-2 border-gray-300 text-gray-700 hover:bg-gray-100 rounded-lg font-semibold transition-all">Tutup</button>
+       </div>
+      </div>
+     </div>
+     <script>
+	 
+	 const supabaseUrl = 'https://hbsxxfdxahpqaapaogrn.supabase.co';
+const supabaseKey = 'sb_publishable_8PEGIBe3j5guJP1Mh_pnIQ_Bbj4yZhz';
+
+const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+        // Separate data stores for each sheet
+        let sheetUsers = [];
+        let sheetCategories = [];
+        let sheetItems = [];
+        let sheetInspections = [];
+        let sheetInspectionDetails = [];
+        let sheetPhotos = [];
+        let sheetActiveInspections = [];
+        
+        // Alias for compatibility
+        let allUsers = [];
+        let allCategories = [];
+        let allItems = [];
+        let allInspections = [];
+        
+        let currentUser = null;
+        let adminExists = false;
+        let selectedCategoryFilter = null;
+        let currentInspectionData = null;
+        let currentUserActiveInspection = null;
+
+        const dataHandler = {
+            onDataChanged(data) {
+                // Separate data by type into corresponding sheets
+                sheetUsers = data.filter(d => d.type === 'sheet_users') || [];
+                sheetCategories = data.filter(d => d.type === 'sheet_categories') || [];
+                sheetItems = data.filter(d => d.type === 'sheet_items') || [];
+                sheetInspections = data.filter(d => d.type === 'sheet_inspections') || [];
+                sheetInspectionDetails = data.filter(d => d.type === 'sheet_inspection_details') || [];
+                sheetPhotos = data.filter(d => d.type === 'sheet_photos') || [];
+                sheetActiveInspections = data.filter(d => d.type === 'sheet_active_inspections') || [];
+                
+                // Also sync legacy item types for backward compatibility
+                const legacyUsers = data.filter(d => d.type === 'user') || [];
+                const legacyCategories = data.filter(d => d.type === 'category') || [];
+                const legacyItems = data.filter(d => d.type === 'item') || [];
+                const legacyInspections = data.filter(d => d.type === 'inspection') || [];
+                
+                // Update aliases - merge sheet and legacy types
+                allUsers = [...sheetUsers, ...legacyUsers];
+                allCategories = [...sheetCategories, ...legacyCategories];
+                allItems = [...sheetItems, ...legacyItems];
+                allInspections = [...sheetInspections, ...legacyInspections];
+                
+                // Update current user's active inspection
+                if (currentUser) {
+                    currentUserActiveInspection = sheetActiveInspections.find(ai => ai.inspectorUsername === currentUser.username);
+                }
+                
+                adminExists = allUsers.some(u => u.role === 'admin');
+                updateQuickLoginUI();
+                updateDashboard();
+                renderItems();
+                renderStaff();
+                renderCategories();
+                renderCategoryFilterDropdown();
+                renderInspectionHistory();
+            }
+        };
+
+        (async () => {
+    const initResult = await window.dataSdk.init(dataHandler);
+    if (!initResult.isOk) {
+        showToast('Error initializing data system', 'error');
+    }
+
+    // 🔥 TAMBAHKAN INI DI SINI
+    loadDataFromSupabase();
+
+})();
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toastMessage');
+            toastMsg.textContent = message;
+            if (type === 'error') {
+                toast.classList.remove('bg-green-600');
+                toast.classList.add('bg-red-600');
+            } else {
+                toast.classList.remove('bg-red-600');
+                toast.classList.add('bg-green-600');
+            }
+            toast.classList.remove('hidden');
+            setTimeout(() => toast.classList.add('hidden'), 3000);
+        }
+       
+async function loadDataFromSupabase() {
+    const { data: users } = await supabase.from('users').select('*');
+
+    allUsers = users || [];
+
+    adminExists = allUsers.some(u => u.role === 'admin');
+
+    updateQuickLoginUI();
+}
+       
+        function setButtonLoading(button, isLoading, originalText = null) {
+            if (isLoading) {
+                button.disabled = true;
+                const currentText = button.textContent;
+                button.dataset.originalText = button.dataset.originalText || currentText;
+                button.innerHTML = `<div class="spinner"></div> <span>Memproses...</span>`;
+            } else {
+                button.disabled = false;
+                button.innerHTML = button.dataset.originalText || originalText || button.textContent;
+            }
+        }
+
+        function switchView(viewId) {
+            document.querySelectorAll('[id$="View"]').forEach(el => el.classList.add('hidden'));
+            document.getElementById(viewId).classList.remove('hidden');
+            closeSidebar();
+        }
+
+        function closeSidebar() {
+            document.getElementById('sidebar').classList.add('-translate-x-full');
+            document.getElementById('sidebarOverlay').classList.add('hidden');
+        }
+
+        function openSidebar() {
+            document.getElementById('sidebar').classList.remove('-translate-x-full');
+            document.getElementById('sidebarOverlay').classList.remove('hidden');
+        }
+
+        // Login & Setup
+        const showAdminSetupBtn = document.getElementById('showAdminSetupBtn');
+        if (showAdminSetupBtn) {
+            showAdminSetupBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('✓ Admin setup button clicked');
+                document.getElementById('setupOrLogin').classList.add('hidden');
+                document.getElementById('adminSetupForm').classList.remove('hidden');
+            });
+        }
+
+        document.getElementById('showLoginBtn')?.addEventListener('click', () => {
+            document.getElementById('setupOrLogin').classList.add('hidden');
+            document.getElementById('loginForm').classList.remove('hidden');
+        });
+
+        document.getElementById('backToMenuBtn')?.addEventListener('click', () => {
+            document.getElementById('adminSetupForm').classList.add('hidden');
+            document.getElementById('setupOrLogin').classList.remove('hidden');
+            document.getElementById('adminUsername').value = '';
+            document.getElementById('adminPassword').value = '';
+        });
+
+        document.getElementById('backToMenuBtn2')?.addEventListener('click', () => {
+            document.getElementById('loginForm').classList.add('hidden');
+            document.getElementById('setupOrLogin').classList.remove('hidden');
+            document.getElementById('loginUsername').value = '';
+            document.getElementById('loginPassword').value = '';
+        });
+
+        document.getElementById('createAdminBtn')?.addEventListener('click', async () => {
+            const button = document.getElementById('createAdminBtn');
+            const username = document.getElementById('adminUsername').value.trim();
+            const password = document.getElementById('adminPassword').value.trim();
+
+            if (!username || !password) {
+                showToast('Username dan password wajib diisi', 'error');
+                return;
+            }
+
+            if (sheetUsers.find(u => u.username === username)) {
+                showToast('Username sudah terdaftar', 'error');
+                return;
+            }
+
+            setButtonLoading(button, true);
+
+            const newAdmin = {
+                type: 'sheet_users',
+                id: 'user_' + Date.now(),
+                username: username,
+                password: password,
+                name: 'Admin User',
+                email: '',
+                role: 'admin',
+                createdAt: new Date().toISOString()
+            };
+
+            console.log('📝 Creating admin with data:', newAdmin);
+            const result = await window.dataSdk.create(newAdmin);
+            setButtonLoading(button, false);
+            
+            if (result.isOk) {
+                console.log('✅ Admin created successfully');
+                showToast('✓ Akun admin berhasil dibuat! Silakan login.');
+                document.getElementById('adminSetupForm').classList.add('hidden');
+                document.getElementById('setupOrLogin').classList.remove('hidden');
+                document.getElementById('adminUsername').value = '';
+                document.getElementById('adminPassword').value = '';
+            } else {
+                console.error('❌ Admin creation failed:', result.error);
+                showToast('Gagal membuat akun admin', 'error');
+            }
+        });
+
+        document.getElementById('loginBtn')?.addEventListener('click', async () => {
+            const button = document.getElementById('loginBtn');
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value.trim();
+
+            if (!username || !password) {
+                showToast('Username dan password wajib diisi', 'error');
+                return;
+            }
+
+            setButtonLoading(button, true);
+
+            const user = sheetUsers.find(u => u.username === username && u.password === password);
+            setButtonLoading(button, false);
+            
+            if (user) {
+                currentUser = user;
+                showLoginScreen(false);
+                renderNavigation();
+                updateDashboard();
+                switchView('dashboardView');
+                showToast(`✓ Selamat datang, ${user.name || user.username}!`);
+            } else {
+                showToast('❌ Username atau password salah', 'error');
+            }
+        });
+
+        document.getElementById('logoutBtn')?.addEventListener('click', () => {
+            currentUser = null;
+            showLoginScreen(true);
+            document.getElementById('loginUsername').value = '';
+            document.getElementById('loginPassword').value = '';
+            document.getElementById('setupOrLogin').classList.remove('hidden');
+            document.getElementById('loginForm').classList.add('hidden');
+            document.getElementById('adminSetupForm').classList.add('hidden');
+        });
+
+        function showLoginScreen(show) {
+            document.getElementById('loginScreen').classList.toggle('hidden', !show);
+            document.getElementById('mainScreen').classList.toggle('hidden', show);
+        }
+
+        function updateQuickLoginUI() {
+            const showAdminBtn = document.getElementById('showAdminSetupBtn');
+            
+            if (adminExists) {
+                showAdminBtn.classList.add('hidden');
+            } else {
+                showAdminBtn.classList.remove('hidden');
+            }
+            renderQuickLoginList();
+        }
+
+        let quickLoginSelectedUser = null;
+
+        function renderQuickLoginList() {
+            const quickLoginList = document.getElementById('quickLoginList');
+            const quickLoginDivider = document.getElementById('quickLoginDivider');
+            const registeredUsers = sheetUsers.filter(u => u.username);
+            
+            if (registeredUsers.length === 0) {
+                quickLoginDivider.classList.add('hidden');
+                return;
+            }
+            
+            quickLoginDivider.classList.remove('hidden');
+            quickLoginList.innerHTML = '';
+            
+            registeredUsers.forEach(user => {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'w-full flex items-center gap-3 p-3 bg-gradient-to-r from-blue-50 to-cyan-50 hover:from-blue-100 hover:to-cyan-100 border-2 border-blue-200 rounded-xl transition-all text-left';
+                button.innerHTML = `
+                    <div class="flex-1">
+                        <p class="font-semibold text-gray-900 text-sm">${user.name || user.username}</p>
+                        <p class="text-xs text-gray-600">@${user.username}</p>
+                    </div>
+                    <span class="text-xs font-bold px-2 py-1 rounded-lg ${user.role === 'admin' ? 'bg-purple-200 text-purple-800' : 'bg-blue-200 text-blue-800'}">${user.role.toUpperCase()}</span>
+                `;
+                button.addEventListener('click', () => {
+                    quickLoginSelectedUser = user;
+                    showQuickLoginPasswordModal(user);
+                });
+                quickLoginList.appendChild(button);
+            });
+        }
+
+        function showQuickLoginPasswordModal(user) {
+            const modal = document.createElement('div');
+            modal.id = 'quickLoginModal';
+            modal.className = 'fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 backdrop-blur-sm';
+            modal.innerHTML = `
+                <div class="card-modern rounded-3xl shadow-2xl p-8 w-full max-w-sm border border-white/20 animate-fade-in">
+                    <div class="text-center mb-6">
+                        <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-600 to-cyan-600 mb-4 shadow-lg">
+                            <span class="text-3xl">${user.role === 'admin' ? '👑' : '👤'}</span>
+                        </div>
+                        <h2 class="text-2xl font-black text-gray-900">Masuk Sebagai</h2>
+                        <p class="text-lg font-bold text-blue-600 mt-2">${user.name || user.username}</p>
+                        <p class="text-sm text-gray-600 mt-1">@${user.username}</p>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div class="relative">
+                            <label class="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide">Password</label>
+                            <div class="relative">
+                                <i data-lucide="lock" style="width: 18px; height: 18px; color: #3b82f6;" class="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                                <input id="quickLoginPassword" type="password" placeholder="Masukkan password" class="w-full pl-12 pr-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all font-medium text-sm" autofocus>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex gap-3 mt-6">
+                        <button id="quickLoginCancelBtn" class="flex-1 px-4 py-3 border-2 border-gray-300 rounded-xl text-gray-700 hover:bg-gray-100 transition-all font-bold text-sm uppercase tracking-wide">Batal</button>
+                        <button id="quickLoginSubmitBtn" class="flex-1 px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl transition-all font-bold text-sm uppercase tracking-wide shadow-lg transform hover:scale-105 active:scale-95">Masuk</button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            lucide.createIcons();
+            
+            const passwordInput = document.getElementById('quickLoginPassword');
+            const submitBtn = document.getElementById('quickLoginSubmitBtn');
+            const cancelBtn = document.getElementById('quickLoginCancelBtn');
+            
+            passwordInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    performQuickLogin(user, passwordInput.value);
+                }
+            });
+            
+            submitBtn.addEventListener('click', () => {
+                performQuickLogin(user, passwordInput.value);
+            });
+            
+            cancelBtn.addEventListener('click', () => {
+                modal.remove();
+                quickLoginSelectedUser = null;
+            });
+            
+            // Close on background click
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.remove();
+                    quickLoginSelectedUser = null;
+                }
+            });
+        }
+
+        function performQuickLogin(user, password) {
+            if (!password) {
+                showToast('Silakan masukkan password', 'error');
+                document.getElementById('quickLoginPassword').focus();
+                return;
+            }
+            
+            if (user.password !== password) {
+                const modal = document.getElementById('quickLoginModal');
+                const passwordInput = document.getElementById('quickLoginPassword');
+                const formElement = passwordInput.closest('.space-y-4');
+                
+                // Create error message if not exists
+                let errorMsg = document.getElementById('quickLoginErrorMsg');
+                if (!errorMsg) {
+                    errorMsg = document.createElement('div');
+                    errorMsg.id = 'quickLoginErrorMsg';
+                    errorMsg.className = 'bg-red-100 border-2 border-red-500 rounded-lg p-3 flex items-center gap-2 text-sm font-bold text-red-800';
+                    formElement.parentNode.insertBefore(errorMsg, formElement);
+                }
+                
+                errorMsg.innerHTML = '<i data-lucide="alert-circle" style="width: 18px; height: 18px;"></i> ❌ Password salah! Silakan coba lagi.';
+                errorMsg.classList.remove('hidden');
+                
+                // Highlight password input
+                passwordInput.value = '';
+                passwordInput.classList.add('border-red-500', 'ring-2', 'ring-red-300');
+                passwordInput.focus();
+                
+                lucide.createIcons();
+                
+                // Clear error after 3 seconds
+                setTimeout(() => {
+                    errorMsg.classList.add('hidden');
+                    passwordInput.classList.remove('border-red-500', 'ring-2', 'ring-red-300');
+                }, 3000);
+                return;
+            }
+            
+            currentUser = user;
+            const modal = document.getElementById('quickLoginModal');
+            if (modal) modal.remove();
+            
+            showLoginScreen(false);
+            renderNavigation();
+            updateDashboard();
+            switchView('dashboardView');
+            showToast(`Selamat datang, ${user.name || user.username}!`);
+            quickLoginSelectedUser = null;
+        }
+
+        document.getElementById('menuBtn').addEventListener('click', openSidebar);
+        document.getElementById('sidebarOverlay').addEventListener('click', closeSidebar);
+
+        function renderNavigation() {
+            const navMenu = document.getElementById('navMenu');
+            const categoryMenuBtn = document.getElementById('categoryMenuBtn');
+            const adminOnlySection = document.querySelector('#sidebar > hr').nextElementSibling;
+            const adminOnlyLabel = adminOnlySection.querySelector('p');
+            
+            navMenu.innerHTML = '';
+
+            // Common menu items for all users
+            const commonMenuItems = [
+                { id: 'dashboard', label: 'Dashboard', icon: 'home' },
+                { id: 'inspection', label: 'Inspection', icon: 'truck' },
+                { id: 'history', label: 'History', icon: 'history' }
+            ];
+
+            // Admin-only menu items
+            const adminMenuItems = [
+                { id: 'items', label: 'Items', icon: 'list-checks' },
+                { id: 'staff', label: 'Staff', icon: 'users' },
+                { id: 'categories', label: 'Categories', icon: 'folder' }
+            ];
+
+            // Render common items
+            commonMenuItems.forEach(item => {
+                const button = document.createElement('button');
+                button.className = 'w-full text-left px-4 py-3 rounded-lg hover:bg-slate-800 transition-all flex items-center gap-3 text-slate-300 hover:text-white';
+                button.innerHTML = `<i data-lucide="${item.icon}" style="width: 20px; height: 20px;"></i><span>${item.label}</span>`;
+                button.addEventListener('click', () => {
+                    if (item.id === 'dashboard') {
+                        switchView('dashboardView');
+                    } else {
+                        switchView(item.id + 'View');
+                    }
+                });
+                navMenu.appendChild(button);
+            });
+
+            // Update admin only label
+            if (currentUser.role === 'admin') {
+                adminOnlyLabel.textContent = 'ADMIN FEATURES';
+                
+                // Show admin menu items
+                adminMenuItems.forEach(item => {
+                    const button = document.createElement('button');
+                    button.className = 'w-full text-left px-4 py-3 rounded-lg hover:bg-slate-800 transition-all flex items-center gap-3 text-slate-300 hover:text-white';
+                    button.innerHTML = `<i data-lucide="${item.icon}" style="width: 20px; height: 20px;"></i><span>${item.label}</span>`;
+                    button.addEventListener('click', () => {
+                        if (item.id === 'categories') {
+                            switchView('categoriesView');
+                        } else {
+                            switchView(item.id + 'View');
+                        }
+                    });
+                    navMenu.appendChild(button);
+                });
+                
+                adminOnlySection.classList.remove('hidden');
+            } else {
+                adminOnlyLabel.textContent = 'FEATURES LAINNYA';
+                adminOnlySection.classList.add('hidden');
+            }
+
+            lucide.createIcons();
+        }
+
+        function updateDashboard() {
+            document.getElementById('totalUsers').textContent = sheetUsers.length;
+            document.getElementById('totalCategories').textContent = sheetCategories.length;
+            document.getElementById('totalItems').textContent = sheetItems.length;
+            document.getElementById('totalInspections').textContent = sheetInspections.length;
+            
+            // Update user role display
+            const userRoleDisplay = document.getElementById('userRoleDisplay');
+            if (userRoleDisplay && currentUser) {
+                const roleEmoji = currentUser.role === 'admin' ? '👑' : '👤';
+                const roleName = currentUser.role === 'admin' ? 'Administrator' : 'Inspector';
+                userRoleDisplay.textContent = `${roleEmoji} ${roleName}`;
+            }
+        }
+        
+        // Dashboard card click handlers
+        let dashboardCardClicks = {};
+        
+        function handleDashboardCardClick(cardName, requiredRole = null) {
+            return function() {
+                // Check if admin-only
+                if (requiredRole === 'admin' && (!currentUser || currentUser.role !== 'admin')) {
+                    showToast('⚠️ Hanya admin yang dapat mengakses menu ini', 'error');
+                    return;
+                }
+                
+                // Check for double-click
+                const now = Date.now();
+                const lastClick = dashboardCardClicks[cardName] || 0;
+                const isDoubleClick = (now - lastClick) < 300;
+                
+                dashboardCardClicks[cardName] = now;
+                
+                if (isDoubleClick) {
+                    // Double click - navigate
+                    switch(cardName) {
+                        case 'users':
+                            switchView('staffView');
+                            break;
+                        case 'categories':
+                            switchView('categoriesView');
+                            break;
+                        case 'items':
+                            switchView('itemsView');
+                            break;
+                        case 'inspections':
+                            switchView('historyView');
+                            break;
+                    }
+                    // Reset clicks counter
+                    dashboardCardClicks[cardName] = 0;
+                } else {
+                    // Single click - show tooltip
+                    showToast('💡 Klik 2 kali untuk masuk ke menu', 'success');
+                }
+            };
+        }
+        
+        // Attach click handlers to cards
+        const usersCard = document.querySelector('[id*="totalUsers"]')?.closest('div.group');
+        const categoriesCard = document.querySelector('[id*="totalCategories"]')?.closest('div.group');
+        const itemsCard = document.querySelector('[id*="totalItems"]')?.closest('div.group');
+        const inspectionsCard = document.querySelector('[id*="totalInspections"]')?.closest('div.group');
+        
+        if (usersCard) usersCard.addEventListener('click', handleDashboardCardClick('users', 'admin'));
+        if (categoriesCard) categoriesCard.addEventListener('click', handleDashboardCardClick('categories', 'admin'));
+        if (itemsCard) itemsCard.addEventListener('click', handleDashboardCardClick('items', 'admin'));
+        if (inspectionsCard) inspectionsCard.addEventListener('click', handleDashboardCardClick('inspections'));
+
+        // Category Filter Dropdown
+        const categoryFilterBtn = document.getElementById('categoryFilterBtn');
+        const categoryFilterDropdown = document.getElementById('categoryFilterDropdown');
+        const filterChevron = document.getElementById('filterChevron');
+
+        categoryFilterBtn?.addEventListener('click', () => {
+            categoryFilterDropdown.classList.toggle('hidden');
+            filterChevron.style.transform = categoryFilterDropdown.classList.contains('hidden') ? 'rotate(0deg)' : 'rotate(180deg)';
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!categoryFilterBtn?.contains(e.target) && !categoryFilterDropdown?.contains(e.target)) {
+                categoryFilterDropdown?.classList.add('hidden');
+                filterChevron.style.transform = 'rotate(0deg)';
+            }
+        });
+
+        // Search filter state
+        let searchTimeout = null;
+        let currentSearchQuery = '';
+
+        // Add search input handler
+        const addSearchInput = () => {
+            const itemsListSection = document.getElementById('itemsListSection');
+            if (!itemsListSection || itemsListSection.querySelector('#itemSearchInput')) return;
+            
+            const filterContainer = itemsListSection.querySelector('.flex.items-center.gap-3');
+            if (!filterContainer) return;
+            
+            const searchDiv = document.createElement('div');
+            searchDiv.className = 'relative w-full';
+            searchDiv.innerHTML = `
+                <i data-lucide="search" style="width: 18px; height: 18px; color: #3b82f6;" class="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                <input 
+                    type="text" 
+                    id="itemSearchInput" 
+                    placeholder="🔍 Cari item berdasarkan nama atau kategori..." 
+                    class="w-full pl-14 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm font-medium transition-all hover:border-blue-400"
+                >
+            `;
+            
+            // Insert search bar AFTER the filter/add button row (as separate row)
+            filterContainer.parentNode.insertBefore(searchDiv, filterContainer.nextSibling);
+            
+            const searchInput = document.getElementById('itemSearchInput');
+            searchInput.addEventListener('input', (e) => {
+                // Clear existing timeout
+                if (searchTimeout) clearTimeout(searchTimeout);
+                
+                // Set new timeout - search triggers after 300ms of no typing
+                searchTimeout = setTimeout(() => {
+                    currentSearchQuery = e.target.value.toLowerCase().trim();
+                    renderItems();
+                }, 300);
+            });
+            
+            lucide.createIcons();
+        };
+
+        function renderCategoryFilterDropdown() {
+            const filterList = document.getElementById('categoryFilterList');
+            filterList.innerHTML = '';
+            
+            sheetCategories.forEach(cat => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'w-full text-left px-5 py-3 hover:bg-blue-50 transition-all border-b border-gray-100 text-sm text-gray-900 flex items-center gap-2 font-medium';
+                btn.innerHTML = `
+                    <i data-lucide="tag" style="width: 16px; height: 16px; color: #7c3aed;"></i>
+                    ${cat.categoryName}
+                    <span class="ml-auto text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">${sheetItems.filter(i => i.categoryId === cat.categoryId).length}</span>
+                `;
+                btn.addEventListener('click', () => {
+                    filterByCategory(cat.categoryId);
+                });
+                filterList.appendChild(btn);
+            });
+            
+            lucide.createIcons();
+        }
+
+        window.filterByCategory = (categoryId) => {
+            selectedCategoryFilter = categoryId;
+            
+            const filterLabel = document.getElementById('filterLabel');
+            if (categoryId === null) {
+                filterLabel.textContent = 'Semua Kategori';
+            } else {
+                const cat = sheetCategories.find(c => c.categoryId === categoryId);
+                filterLabel.textContent = cat?.categoryName || 'Semua Kategori';
+            }
+            
+            document.getElementById('categoryFilterDropdown').classList.add('hidden');
+            document.getElementById('filterChevron').style.transform = 'rotate(0deg)';
+            
+            renderItems();
+        };
+
+        // Items Management
+        let currentEditingItemId = null;
+
+        document.getElementById('addItemBtn')?.addEventListener('click', () => {
+            currentEditingItemId = null;
+            document.getElementById('itemCategory').value = '';
+            document.getElementById('itemCategory').dataset.categoryId = '';
+            document.getElementById('itemName').value = '';
+            document.getElementById('itemCriticalLevel').value = 'Low';
+            document.getElementById('newDamageInput').value = '';
+            document.getElementById('damageList').innerHTML = '';
+            document.querySelector('#itemModal h3').textContent = 'Tambah Item Inspeksi';
+            document.getElementById('itemModal').classList.remove('hidden');
+        });
+
+        document.getElementById('addItemBtn2')?.addEventListener('click', () => {
+            currentEditingItemId = null;
+            document.getElementById('itemCategory').value = '';
+            document.getElementById('itemCategory').dataset.categoryId = '';
+            document.getElementById('itemName').value = '';
+            document.getElementById('itemCriticalLevel').value = 'Low';
+            document.getElementById('newDamageInput').value = '';
+            document.getElementById('damageList').innerHTML = '';
+            document.querySelector('#itemModal h3').textContent = 'Tambah Item Inspeksi';
+            document.getElementById('itemModal').classList.remove('hidden');
+        });
+
+        const categoryInput = document.getElementById('itemCategory');
+        const categoryDropdown = document.getElementById('categoryDropdown');
+        const categoryToggle = document.getElementById('categoryDropdownToggle');
+
+        function updateCategoryDropdownVisibility() {
+            if (allCategories.length > 0) {
+                categoryToggle.classList.remove('hidden');
+            } else {
+                categoryToggle.classList.add('hidden');
+            }
+        }
+
+        categoryInput?.addEventListener('input', function() {
+            const value = this.value.toLowerCase().trim();
+            
+            if (!value) {
+                categoryDropdown.classList.add('hidden');
+                this.dataset.categoryId = '';
+                updateCategoryDropdownVisibility();
+                return;
+            }
+            
+            const filtered = allCategories.filter(cat => 
+                cat.categoryName.toLowerCase().includes(value)
+            );
+            
+            if (filtered.length > 0) {
+                let html = filtered.map(cat => 
+                    `<div class="autocomplete-item" onclick="selectCategory('${cat.categoryId}', '${cat.categoryName}')">${cat.categoryName}</div>`
+                ).join('');
+                
+                // Add option to create new category if text doesn't match exactly
+                const exactMatch = allCategories.find(cat => cat.categoryName.toLowerCase() === value);
+                if (!exactMatch) {
+                    html += `<div class="autocomplete-item" style="background-color: #f0fdf4; color: #16a34a; border-top: 1px solid #dcfce7; padding: 16px !important; font-size: 15px !important; font-weight: 600;" onclick="selectCategory('new', '${value}')">➕ Buat kategori baru: <strong>${value}</strong></div>`;
+                }
+                
+                categoryDropdown.innerHTML = html;
+                categoryDropdown.classList.remove('hidden');
+            } else {
+                // Show option to create new category
+                categoryDropdown.innerHTML = `<div class="autocomplete-item" style="background-color: #f0fdf4; color: #16a34a; padding: 16px !important; font-size: 15px !important; font-weight: 600;" onclick="selectCategory('new', '${value}')">➕ Buat kategori baru: <strong>${value}</strong></div>`;
+                categoryDropdown.classList.remove('hidden');
+                this.dataset.categoryId = '';
+            }
+        });
+
+        document.addEventListener('click', function(e) {
+            if (e.target !== categoryInput && e.target !== categoryToggle && !categoryDropdown.contains(e.target)) {
+                categoryDropdown.classList.add('hidden');
+            }
+        });
+
+        categoryToggle?.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (allCategories.length === 0) {
+                showToast('No categories available. Create one first.', 'error');
+                return;
+            }
+            categoryDropdown.innerHTML = allCategories.map(cat => 
+                `<div class="autocomplete-item" onclick="selectCategory('${cat.categoryId}', '${cat.categoryName}')">${cat.categoryName}</div>`
+            ).join('');
+            categoryDropdown.classList.remove('hidden');
+        });
+
+        categoryInput?.addEventListener('focus', function() {
+            updateCategoryDropdownVisibility();
+        });
+
+        window.selectCategory = (categoryId, categoryName) => {
+            document.getElementById('itemCategory').value = categoryName;
+            if (categoryId === 'new') {
+                document.getElementById('itemCategory').dataset.categoryId = '';
+            } else {
+                document.getElementById('itemCategory').dataset.categoryId = categoryId;
+            }
+            document.getElementById('categoryDropdown').classList.add('hidden');
+        };
+
+        document.getElementById('addDamageBtn')?.addEventListener('click', () => {
+            const input = document.getElementById('newDamageInput');
+            const damageName = input.value.trim();
+            
+            if (!damageName) {
+                showToast('Please enter a damage type', 'error');
+                return;
+            }
+            
+            const damageList = document.getElementById('damageList');
+            const damageId = 'temp_' + Date.now();
+            
+            // Show the damage list if it was hidden
+            if (damageList.hasAttribute('data-empty')) {
+                damageList.removeAttribute('data-empty');
+                damageList.classList.remove('hidden');
+            }
+            
+            const damageTag = document.createElement('div');
+            damageTag.className = 'flex items-center justify-between bg-white text-purple-800 px-3 py-2 rounded-lg text-xs font-medium border border-purple-300 hover:shadow-sm transition-all';
+            damageTag.dataset.damageId = damageId;
+            
+            const deleteBtn = document.createElement('button');
+            deleteBtn.type = 'button';
+            deleteBtn.className = 'ml-2 text-purple-600 hover:text-purple-900 font-bold text-lg leading-none p-0 hover:bg-purple-200 rounded transition-all';
+            deleteBtn.textContent = '×';
+            deleteBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                damageTag.remove();
+                
+                // Hide damage list if empty
+                if (damageList.children.length === 0) {
+                    damageList.setAttribute('data-empty', 'true');
+                    damageList.classList.add('hidden');
+                }
+            });
+            
+            const textSpan = document.createElement('span');
+            textSpan.textContent = damageName;
+            
+            damageTag.appendChild(textSpan);
+            damageTag.appendChild(deleteBtn);
+            damageList.appendChild(damageTag);
+            input.value = '';
+        });
+
+        window.removeDamageTag = (damageId) => {
+            const tag = document.querySelector(`[data-damageId="${damageId}"]`);
+            if (tag) tag.remove();
+        };
+
+        document.getElementById('cancelItemBtn')?.addEventListener('click', () => {
+            document.getElementById('itemModal').classList.add('hidden');
+        });
+
+        document.getElementById('saveItemBtn')?.addEventListener('click', async () => {
+            const button = document.getElementById('saveItemBtn');
+            const categoryInput = document.getElementById('itemCategory').value.trim();
+            const itemName = document.getElementById('itemName').value.trim();
+            const criticalLevel = document.getElementById('itemCriticalLevel').value;
+            
+            const damageTags = Array.from(document.querySelectorAll('#damageList > div'));
+            const damageList = damageTags.map(tag => tag.textContent.replace('×', '').trim());
+
+            if (!itemName) {
+                showToast('Nama item wajib diisi', 'error');
+                return;
+            }
+
+            if (!categoryInput) {
+                showToast('Kategori wajib dipilih atau dibuat', 'error');
+                return;
+            }
+
+            setButtonLoading(button, true);
+
+            let categoryId = document.getElementById('itemCategory').dataset.categoryId;
+            if (!categoryId) {
+                const newCategory = {
+                    type: 'sheet_categories',
+                    id: 'cat_' + Date.now(),
+                    categoryId: 'cat_' + Date.now(),
+                    categoryName: categoryInput,
+                    createdAt: new Date().toISOString()
+                };
+                
+                console.log('📝 Creating new category:', newCategory);
+                const catResult = await window.dataSdk.create(newCategory);
+                if (!catResult.isOk) {
+                    console.error('❌ Category creation failed:', catResult.error);
+                    showToast('Gagal membuat kategori', 'error');
+                    setButtonLoading(button, false);
+                    return;
+                }
+                categoryId = newCategory.categoryId;
+                console.log('✓ Category created with ID:', categoryId);
+            }
+
+            if (currentEditingItemId) {
+                // Update existing item
+                console.log('✏️ Updating item:', currentEditingItemId);
+                const itemToUpdate = sheetItems.find(i => i.__backendId === currentEditingItemId);
+                if (itemToUpdate) {
+                    const updatedItem = {
+                        ...itemToUpdate,
+                        itemName,
+                        categoryId,
+                        damageTypeId: damageList.join(',') || '',
+                        criticalLevel
+                    };
+                    
+                    console.log('📤 Sending update:', updatedItem);
+                    const result = await window.dataSdk.update(updatedItem);
+                    setButtonLoading(button, false);
+                    
+                    if (result.isOk) {
+                        console.log('✓ Item updated successfully');
+                        document.getElementById('itemModal').classList.add('hidden');
+                        currentEditingItemId = null;
+                        showToast('✓ Item berhasil diperbarui!');
+                    } else {
+                        console.error('❌ Update failed:', result.error);
+                        showToast('Gagal memperbarui item', 'error');
+                    }
+                }
+            } else {
+                // Create new item
+                const newItem = {
+                    type: 'sheet_items',
+                    id: 'item_' + Date.now(),
+                    itemId: 'item_' + Date.now(),
+                    itemName,
+                    categoryId,
+                    damageTypeId: damageList.join(',') || '',
+                    criticalLevel,
+                    createdAt: new Date().toISOString()
+                };
+
+                console.log('📝 Creating new item:', newItem);
+                const result = await window.dataSdk.create(newItem);
+                setButtonLoading(button, false);
+                
+                if (result.isOk) {
+                    console.log('✓ Item created successfully');
+                    document.getElementById('itemModal').classList.add('hidden');
+                    showToast('✓ Item berhasil ditambahkan!');
+                } else {
+                    console.error('❌ Create failed:', result.error);
+                    showToast('Gagal menambahkan item', 'error');
+                }
+            }
+        });
+
+        function renderItems() {
+            const list = document.getElementById('itemsList');
+            const emptyState = document.getElementById('itemsEmptyState');
+            const listSection = document.getElementById('itemsListSection');
+            
+            if (!list || !emptyState || !listSection) {
+                console.warn('⚠️ renderItems: Missing DOM elements');
+                return;
+            }
+
+            list.innerHTML = '';
+            let itemsToDisplay = sheetItems || [];
+            
+            if (selectedCategoryFilter) {
+                itemsToDisplay = itemsToDisplay.filter(i => i.categoryId === selectedCategoryFilter);
+            }
+
+            // Show/hide sections based on whether items exist
+            if (itemsToDisplay.length === 0) {
+                emptyState.classList.remove('hidden');
+                listSection.classList.add('hidden');
+                console.log('📭 No items to display - showing empty state');
+                return;
+            } else {
+                emptyState.classList.add('hidden');
+                listSection.classList.remove('hidden');
+                addSearchInput();
+                console.log(`📊 Displaying ${itemsToDisplay.length} items`);
+            }
+
+            // Apply search filter - matches partial text in name or category
+            if (currentSearchQuery) {
+                itemsToDisplay = itemsToDisplay.filter(item => {
+                    const itemName = item.itemName.toLowerCase();
+                    const cat = sheetCategories.find(c => c.categoryId === item.categoryId);
+                    const categoryName = cat?.categoryName.toLowerCase() || '';
+                    
+                    return itemName.includes(currentSearchQuery) || categoryName.includes(currentSearchQuery);
+                });
+            }
+
+            if (itemsToDisplay.length === 0) {
+                list.innerHTML = '<div class="col-span-full card-modern rounded-lg shadow p-4 text-center"><p class="text-gray-500 text-sm font-medium">Tidak ada item yang ditemukan</p></div>';
+                return;
+            }
+
+            itemsToDisplay.forEach(item => {
+                const damages = item.damageTypeId ? item.damageTypeId.split(',').filter(d => d) : [];
+                const cat = sheetCategories.find(c => c.categoryId === item.categoryId);
+                
+                let criticalEmoji = '🟢';
+                if (item.criticalLevel === 'Medium') criticalEmoji = '🟡';
+                else if (item.criticalLevel === 'High') criticalEmoji = '🟠';
+                else if (item.criticalLevel === 'Critical') criticalEmoji = '🔴';
+                
+                const card = document.createElement('div');
+                card.className = 'card-modern rounded-lg shadow-sm hover:shadow-md transition-all border border-gray-200 hover:border-blue-300 overflow-hidden';
+                
+                card.innerHTML = `
+                    <div class="bg-gradient-to-r from-blue-50 to-cyan-50 p-3 border-b border-gray-200">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="flex-1 min-w-0">
+                                <h3 class="font-bold text-gray-900 text-sm truncate">${item.itemName}</h3>
+                                <p class="text-xs text-gray-600 truncate">📁 ${cat?.categoryName || 'Unknown'}</p>
+                            </div>
+                            <div class="flex items-center gap-2 flex-shrink-0">
+                                <span class="text-lg">${criticalEmoji}</span>
+                                <button type="button" class="edit-item-btn p-1.5 hover:bg-blue-200 rounded transition-all" data-item-id="${item.__backendId}" title="Edit">
+                                    <i data-lucide="pencil" style="width: 16px; height: 16px; color: #3b82f6;"></i>
+                                </button>
+                                <button type="button" class="delete-item-btn p-1.5 hover:bg-red-200 rounded transition-all" data-item-id="${item.__backendId}" title="Hapus">
+                                    <i data-lucide="trash-2" style="width: 16px; height: 16px; color: #ef4444;"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                list.appendChild(card);
+            });
+
+            // Attach event listeners to buttons
+            document.querySelectorAll('.edit-item-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    editItem(btn.dataset.itemId);
+                });
+            });
+
+            document.querySelectorAll('.delete-item-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    deleteItem(btn.dataset.itemId);
+                });
+            });
+
+            console.log(`✓ Rendered ${itemsToDisplay.length} items successfully`);
+            lucide.createIcons();
+        }
+
+        let deleteConfirmationId = null;
+
+        window.deleteItem = (id) => {
+            if (deleteConfirmationId === id) {
+                // Second click - actually delete
+                confirmDeleteItem(id);
+                deleteConfirmationId = null;
+            } else {
+                // First click - show confirmation
+                deleteConfirmationId = id;
+                showToast('⚠️ Tekan lagi untuk menghapus item ini!');
+                
+                // Reset confirmation after 3 seconds
+                setTimeout(() => {
+                    if (deleteConfirmationId === id) {
+                        deleteConfirmationId = null;
+                    }
+                }, 3000);
+            }
+        };
+
+        async function confirmDeleteItem(id) {
+            const item = allItems.find(i => i.__backendId === id);
+            if (item) {
+                const result = await window.dataSdk.delete(item);
+                if (result.isOk) {
+                    showToast('✓ Item berhasil dihapus!');
+                } else {
+                    showToast('Gagal menghapus item', 'error');
+                }
+            }
+        }
+
+        window.editItem = (id) => {
+            const item = sheetItems.find(i => i.__backendId === id);
+            if (item) {
+                currentEditingItemId = id;
+                document.getElementById('itemName').value = item.itemName;
+                document.getElementById('itemCriticalLevel').value = item.criticalLevel;
+                
+                const cat = sheetCategories.find(c => c.categoryId === item.categoryId);
+                document.getElementById('itemCategory').value = cat?.categoryName || '';
+                document.getElementById('itemCategory').dataset.categoryId = item.categoryId;
+                
+                // Load damages
+                document.getElementById('damageList').innerHTML = '';
+                const damages = item.damageTypeId ? item.damageTypeId.split(',').filter(d => d) : [];
+                if (damages.length > 0) {
+                    document.getElementById('damageList').classList.remove('hidden');
+                    document.getElementById('damageList').removeAttribute('data-empty');
+                }
+                damages.forEach((damageName, index) => {
+                    const damageId = 'damage_' + id + '_' + index;
+                    const damageTag = document.createElement('div');
+                    damageTag.className = 'flex items-center justify-between bg-yellow-100 text-yellow-800 px-3 py-2 rounded text-xs font-medium';
+                    damageTag.dataset.damageId = damageId;
+                    
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.type = 'button';
+                    deleteBtn.className = 'ml-2 text-yellow-600 hover:text-yellow-800 font-bold text-lg leading-none p-0 hover:bg-yellow-200 rounded transition-all';
+                    deleteBtn.textContent = '×';
+                    deleteBtn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        damageTag.remove();
+                        if (document.getElementById('damageList').children.length === 0) {
+                            document.getElementById('damageList').classList.add('hidden');
+                            document.getElementById('damageList').setAttribute('data-empty', 'true');
+                        }
+                    });
+                    
+                    const span = document.createElement('span');
+                    span.textContent = damageName;
+                    
+                    damageTag.appendChild(span);
+                    damageTag.appendChild(deleteBtn);
+                    document.getElementById('damageList').appendChild(damageTag);
+                });
+                
+                document.getElementById('newDamageInput').value = '';
+                document.querySelector('#itemModal h3').textContent = '✏️ Edit Item Inspeksi';
+                document.getElementById('itemModal').classList.remove('hidden');
+                showToast('📝 Mode Edit: Ubah data sesuai kebutuhan');
+            }
+        };
+
+        // Categories Management
+        document.getElementById('addCategoryBtn')?.addEventListener('click', () => {
+            document.getElementById('categoryName').value = '';
+            document.getElementById('categoryModal').classList.remove('hidden');
+        });
+
+        document.getElementById('cancelCategoryBtn')?.addEventListener('click', () => {
+            document.getElementById('categoryModal').classList.add('hidden');
+        });
+
+        document.getElementById('saveCategoryBtn')?.addEventListener('click', async () => {
+            const button = document.getElementById('saveCategoryBtn');
+            const categoryName = document.getElementById('categoryName').value.trim();
+
+            if (!categoryName) {
+                showToast('Nama kategori wajib diisi', 'error');
+                return;
+            }
+
+            if (sheetCategories.find(c => c.categoryName.toLowerCase() === categoryName.toLowerCase())) {
+                showToast('❌ Kategori sudah ada', 'error');
+                return;
+            }
+
+            setButtonLoading(button, true);
+
+            const newCategory = {
+                type: 'sheet_categories',
+                id: 'cat_' + Date.now(),
+                categoryId: 'cat_' + Date.now(),
+                categoryName: categoryName,
+                createdAt: new Date().toISOString()
+            };
+
+            const result = await window.dataSdk.create(newCategory);
+            setButtonLoading(button, false);
+            
+            if (result.isOk) {
+                document.getElementById('categoryModal').classList.add('hidden');
+                showToast('✓ Kategori berhasil ditambahkan!');
+            } else {
+                showToast('❌ Gagal menambahkan kategori', 'error');
+            }
+        });
+
+        function renderCategories() {
+            const list = document.getElementById('categoriesList');
+            if (!list) return;
+
+            list.innerHTML = '';
+            if (sheetCategories.length === 0) {
+                list.innerHTML = '<div class="col-span-full card-modern rounded-lg shadow p-6 text-center"><p class="text-gray-500 text-sm font-medium">No categories yet. Click "Add Category" to create one.</p></div>';
+                return;
+            }
+
+            sheetCategories.forEach(cat => {
+                const itemsInCat = sheetItems.filter(i => i.categoryId === cat.categoryId).length;
+                const categoryItemsInCat = sheetItems.filter(i => i.categoryId === cat.categoryId);
+                
+                const card = document.createElement('div');
+                card.className = 'card-modern rounded-lg shadow-sm hover:shadow-md transition-all border border-gray-100 hover:border-blue-300 overflow-hidden';
+                card.innerHTML = `
+                    <div class="bg-gradient-to-r from-blue-50 to-cyan-50 p-4 border-b border-gray-200">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="flex-1 cursor-pointer" onclick="toggleCategoryDropdown('${cat.__backendId}')">
+                                <h3 class="font-bold text-gray-900 text-sm">${cat.categoryName}</h3>
+                                <p class="text-xs text-gray-600 mt-2">📊 ${itemsInCat} item${itemsInCat !== 1 ? 's' : ''}</p>
+                            </div>
+                            <button class="delete-category-btn p-2 hover:bg-red-100 rounded transition-all flex-shrink-0" data-cat-id="${cat.__backendId}" title="Hapus kategori">
+                                <i data-lucide="trash-2" style="width: 16px; height: 16px; color: #ef4444;"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="category-dropdown-content p-3 space-y-2" id="dropdown-${cat.__backendId}" style="display: none;">
+                        ${itemsInCat > 0 ? `
+                            <div class="space-y-1">
+                                ${categoryItemsInCat.map(item => `
+                                    <p class="text-xs text-gray-700 flex items-center gap-2 p-1 hover:bg-blue-50 rounded transition-all">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
+                                        ${item.itemName}
+                                    </p>
+                                `).join('')}
+                            </div>
+                        ` : '<p class="text-xs text-gray-500 italic">No items in this category</p>'}
+                    </div>
+                `;
+                list.appendChild(card);
+            });
+
+            // Attach delete button listeners
+            document.querySelectorAll('.delete-category-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    deleteCategory(btn.dataset.catId);
+                });
+            });
+
+            lucide.createIcons();
+        }
+
+        window.toggleCategoryDropdown = (categoryId) => {
+            const dropdown = document.getElementById(`dropdown-${categoryId}`);
+            if (dropdown) {
+                const isHidden = dropdown.style.display === 'none';
+                // Hide all other dropdowns
+                document.querySelectorAll('.category-dropdown-content').forEach(d => {
+                    d.style.display = 'none';
+                });
+                // Toggle this one
+                dropdown.style.display = isHidden ? 'block' : 'none';
+            }
+        };
+
+        window.deleteCategory = async (id) => {
+            const cat = sheetCategories.find(c => c.__backendId === id);
+            if (!cat) {
+                showToast('Kategori tidak ditemukan', 'error');
+                return;
+            }
+
+            const itemsInCat = sheetItems.filter(i => i.categoryId === cat.categoryId).length;
+            
+            if (itemsInCat > 0) {
+                showToast(`❌ Tidak bisa hapus! Ada ${itemsInCat} item dalam kategori ini.`, 'error');
+                return;
+            }
+
+            // For empty categories, show inline confirmation instead of confirm()
+            const btn = event?.target?.closest('.delete-category-btn');
+            if (btn && btn.dataset.confirmPending !== 'true') {
+                btn.dataset.confirmPending = 'true';
+                const originalHTML = btn.innerHTML;
+                btn.innerHTML = '<i data-lucide="alert-circle" style="width: 16px; height: 16px; color: #ef4444;"></i>';
+                btn.style.backgroundColor = '#fee2e2';
+                btn.style.borderColor = '#ef4444';
+                showToast('⚠️ Tekan lagi untuk hapus kategori ini!');
+                lucide.createIcons();
+                
+                setTimeout(() => {
+                    btn.dataset.confirmPending = 'false';
+                    btn.innerHTML = originalHTML;
+                    btn.style.backgroundColor = '';
+                    btn.style.borderColor = '';
+                    lucide.createIcons();
+                }, 3000);
+                return;
+            }
+
+            // Actually delete on second click
+            const result = await window.dataSdk.delete(cat);
+            if (result.isOk) {
+                showToast('✓ Kategori berhasil dihapus!');
+            } else {
+                showToast('❌ Gagal menghapus kategori', 'error');
+            }
+        };
+
+        let currentEditingStaffId = null;
+
+        document.getElementById('addStaffBtn')?.addEventListener('click', openAddStaffModal);
+
+        function openAddStaffModal(e) {
+            if (e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            
+            currentEditingStaffId = null;
+            
+            document.getElementById('staffUsername').value = '';
+            document.getElementById('staffPassword').value = '';
+            document.getElementById('staffRole').value = 'inspector';
+            document.getElementById('staffRoleContainer').classList.remove('hidden');
+            document.getElementById('staffUsername').disabled = false;
+            document.getElementById('staffPassword').disabled = false;
+            document.getElementById('staffRole').disabled = false;
+            document.getElementById('staffModalTitle').textContent = 'Tambah Staff Baru';
+            
+            const staffModal = document.getElementById('staffModal');
+            staffModal.classList.remove('hidden');
+            staffModal.classList.add('active');
+        }
+
+        document.getElementById('cancelStaffBtn')?.addEventListener('click', closeStaffModal);
+
+        function closeStaffModal() {
+            const staffModal = document.getElementById('staffModal');
+            staffModal.classList.add('hidden');
+            staffModal.classList.remove('active');
+            document.body.style.overflow = 'auto';
+            currentEditingStaffId = null;
+        }
+
+        document.getElementById('saveStaffBtn')?.addEventListener('click', async () => {
+            const button = document.getElementById('saveStaffBtn');
+            const username = document.getElementById('staffUsername').value.trim();
+            const password = document.getElementById('staffPassword').value.trim();
+
+            if (!username || !password) {
+                showToast('Username dan password wajib diisi', 'error');
+                return;
+            }
+
+            setButtonLoading(button, true);
+
+            if (currentEditingStaffId) {
+                // Update existing staff
+                const staffToUpdate = sheetUsers.find(u => u.__backendId === currentEditingStaffId);
+                if (staffToUpdate) {
+                    if (username !== staffToUpdate.username && sheetUsers.find(u => u.username === username)) {
+                        showToast('Username sudah terdaftar', 'error');
+                        setButtonLoading(button, false);
+                        return;
+                    }
+
+                    const updatedStaff = {
+                        ...staffToUpdate,
+                        username,
+                        password,
+                        role: document.getElementById('staffRole').value
+                    };
+
+                    const result = await window.dataSdk.update(updatedStaff);
+                    setButtonLoading(button, false);
+                    
+                    if (result.isOk) {
+                        closeStaffModal();
+                        showToast('✓ Staff berhasil diperbarui!');
+                    } else {
+                        showToast('Gagal memperbarui staff', 'error');
+                    }
+                }
+            } else {
+                // Create new staff
+                const role = document.getElementById('staffRole').value;
+
+                if (sheetUsers.find(u => u.username === username)) {
+                    showToast('Username sudah terdaftar', 'error');
+                    setButtonLoading(button, false);
+                    return;
+                }
+
+                const newStaff = {
+                    type: 'sheet_users',
+                    id: 'user_' + Date.now(),
+                    username: username,
+                    password: password,
+                    name: username,
+                    email: '',
+                    role: role,
+                    createdAt: new Date().toISOString()
+                };
+
+                const result = await window.dataSdk.create(newStaff);
+                setButtonLoading(button, false);
+                
+                if (result.isOk) {
+                    closeStaffModal();
+                    showToast('✓ Staff berhasil ditambahkan!');
+                } else {
+                    showToast('Gagal menambahkan staff', 'error');
+                }
+            }
+        });
+
+        function renderStaff() {
+            const list = document.getElementById('staffList');
+            if (!list) return;
+
+            list.innerHTML = '';
+            const staff = sheetUsers.filter(u => u.role !== 'admin' || u.type === 'sheet_users');
+            if (staff.length === 0) {
+                list.innerHTML = '<div class="col-span-full card-modern rounded-lg shadow p-6 text-center"><p class="text-gray-500 text-sm font-medium">Belum ada staff. Klik "Tambah Staff" untuk membuat.</p></div>';
+                return;
+            }
+
+            staff.forEach(s => {
+                const isCurrentUser = currentUser && currentUser.username === s.username;
+                const roleIcon = s.role === 'admin' ? '👑' : '👤';
+                const roleColor = s.role === 'admin' ? 'from-purple-600 to-purple-700' : 'from-blue-600 to-blue-700';
+                const backendId = s.__backendId || s.id || 'staff_' + Math.random();
+                
+                const card = document.createElement('div');
+                card.className = 'card-modern rounded-xl shadow-md hover:shadow-lg transition-all border border-gray-200 hover:border-blue-300 overflow-hidden group';
+                card.innerHTML = `
+                    <div class="bg-gradient-to-r ${roleColor} p-3 text-white relative overflow-hidden">
+                        <div class="absolute -right-8 -top-8 w-20 h-20 bg-white/10 rounded-full"></div>
+                        <div class="flex items-start justify-between relative z-10">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-2xl">${roleIcon}</span>
+                                    <h3 class="font-bold text-white text-sm">${s.name || s.username}</h3>
+                                </div>
+                                <p class="text-xs text-white/80 mt-1">@${s.username}</p>
+                            </div>
+                            <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-white/20 backdrop-blur-sm text-white whitespace-nowrap">${s.role.toUpperCase()}</span>
+                        </div>
+                    </div>
+                    <div class="p-3 space-y-2">
+                        ${isCurrentUser ? '<div class="text-xs bg-amber-50 border border-amber-200 px-2 py-1 rounded text-amber-700 font-medium">✓ Current User</div>' : ''}
+                    </div>
+                    <div class="px-3 pb-3 flex gap-2 border-t border-gray-100 pt-2">
+                        <button type="button" class="edit-btn-staff flex-1 flex items-center justify-center gap-1 px-2 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg transition-all font-semibold text-xs" data-id="${backendId}" title="Edit">
+                            <i data-lucide="pencil" style="width: 14px; height: 14px;"></i>
+                            <span>Edit</span>
+                        </button>
+                        <button type="button" class="delete-btn-staff flex-1 flex items-center justify-center gap-1 px-2 py-2 bg-red-50 hover:bg-red-100 text-red-700 rounded-lg transition-all font-semibold text-xs" data-id="${backendId}" title="Hapus">
+                            <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>
+                            <span>Hapus</span>
+                        </button>
+                    </div>
+                `;
+                list.appendChild(card);
+            });
+
+            // Attach event listeners dengan delegasi atau langsung
+            setTimeout(() => {
+                document.querySelectorAll('.edit-btn-staff').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const staffId = btn.getAttribute('data-id');
+                        console.log('✏️ Edit staff clicked:', staffId);
+                        editStaff(staffId);
+                    });
+                });
+
+                document.querySelectorAll('.delete-btn-staff').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const staffId = btn.getAttribute('data-id');
+                        console.log('🗑️ Delete staff clicked:', staffId);
+                        deleteStaff(staffId);
+                    });
+                });
+
+                lucide.createIcons();
+            }, 100);
+        }
+
+        window.editStaff = (id) => {
+            const user = allUsers.find(u => u.__backendId === id);
+            if (user) {
+                currentEditingStaffId = id;
+                isAdminEditMode = false;
+                
+                document.getElementById('staffUsername').value = user.username || '';
+                document.getElementById('staffPassword').value = user.password || '';
+                document.getElementById('staffRole').value = user.role || 'inspector';
+                
+                document.getElementById('staffRoleContainer').classList.remove('hidden');
+                document.getElementById('staffUsername').disabled = false;
+                document.getElementById('staffPassword').disabled = false;
+                document.getElementById('staffRole').disabled = false;
+                
+                document.getElementById('staffModalTitle').textContent = '✏️ Edit Staff';
+                document.getElementById('staffModal').classList.remove('hidden');
+            }
+        };
+
+        window.deleteStaff = async (id) => {
+            const user = sheetUsers.find(u => u.__backendId === id);
+            if (!user) {
+                console.error('Staff not found:', id);
+                showToast('Staff tidak ditemukan', 'error');
+                return;
+            }
+            
+            // Show inline confirmation instead of alert
+            const btn = document.querySelector(`[data-id="${id}"].delete-btn-staff`);
+            if (btn && btn.dataset.confirmPending !== 'true') {
+                btn.dataset.confirmPending = 'true';
+                const originalHTML = btn.innerHTML;
+                btn.innerHTML = '<i data-lucide="alert-circle" style="width: 14px; height: 14px;"></i> <span>Yakin?</span>';
+                btn.style.backgroundColor = '#fee2e2';
+                btn.style.color = '#991b1b';
+                btn.style.borderColor = '#fca5a5';
+                showToast('⚠️ Tekan lagi untuk hapus staff ini!');
+                lucide.createIcons();
+                
+                setTimeout(() => {
+                    btn.dataset.confirmPending = 'false';
+                    btn.innerHTML = originalHTML;
+                    btn.style.backgroundColor = '';
+                    btn.style.color = '';
+                    btn.style.borderColor = '';
+                    lucide.createIcons();
+                }, 3000);
+                return;
+            }
+            
+            // Second click - actually delete
+            const result = await window.dataSdk.delete(user);
+            if (result.isOk) {
+                showToast('✓ Staff berhasil dihapus!');
+            } else {
+                showToast('❌ Gagal menghapus staff', 'error');
+            }
+        };
+
+        // ============ INSPECTION SYSTEM ============
+        let inspectionStep = 0;
+        let inspectionFormData = null;
+        let inspectionItemsData = {};
+
+        function initInspectionSystem() {
+            console.log('🔧 Initializing inspection system...');
+            
+            const startBtn = document.getElementById('startNewInspectionBtn');
+            const cancelVehicleBtn = document.getElementById('cancelVehicleDataBtn');
+            const confirmVehicleBtn = document.getElementById('confirmVehicleDataBtn');
+            const cancelInspBtn = document.getElementById('cancelInspectionBtn');
+            const submitBtn = document.getElementById('submitInspectionBtn');
+            const tabVehicle = document.getElementById('tabVehicleData');
+            const tabChecklist = document.getElementById('tabChecklist');
+            
+            console.log('Button elements:', {
+                startBtn: !!startBtn,
+                cancelVehicleBtn: !!cancelVehicleBtn,
+                confirmVehicleBtn: !!confirmVehicleBtn,
+                cancelInspBtn: !!cancelInspBtn,
+                submitBtn: !!submitBtn,
+                tabVehicle: !!tabVehicle,
+                tabChecklist: !!tabChecklist
+            });
+            
+            if (startBtn) startBtn.addEventListener('click', startNewInspection);
+            if (cancelVehicleBtn) cancelVehicleBtn.addEventListener('click', cancelInspection);
+            if (confirmVehicleBtn) confirmVehicleBtn.addEventListener('click', (e) => {
+                console.log('✓ Confirm button clicked');
+                proceedToStep2(e);
+            });
+            if (cancelInspBtn) cancelInspBtn.addEventListener('click', cancelInspection);
+            if (submitBtn) submitBtn.addEventListener('click', submitInspection);
+            if (tabVehicle) tabVehicle.addEventListener('click', switchToVehicleDataTab);
+            if (tabChecklist) tabChecklist.addEventListener('click', switchToChecklistTab);
+            
+            // Check if user has active inspection and restore it
+            if (currentUser && currentUserActiveInspection) {
+                console.log('⚡ Found active inspection for user, restoring...');
+                restoreUserActiveInspection();
+            }
+            
+            console.log('✓ Inspection system ready');
+        }
+
+        function restoreUserActiveInspection() {
+            try {
+                const active = currentUserActiveInspection;
+                inspectionFormData = JSON.parse(active.formData || '{}');
+                inspectionItemsData = JSON.parse(active.itemsData || '{}');
+                inspectionStep = 1;
+                
+                // Restore form fields
+                document.getElementById('customerName').value = inspectionFormData.customerName || '';
+                document.getElementById('customerPhone').value = inspectionFormData.customerPhone || '';
+                document.getElementById('vehicleType').value = inspectionFormData.vehicleType || '';
+                document.getElementById('vehiclePlate').value = inspectionFormData.vehiclePlate || '';
+                document.getElementById('vehicleYear').value = inspectionFormData.vehicleYear || '';
+                document.getElementById('vehicleColor').value = inspectionFormData.vehicleColor || '';
+                document.getElementById('vehicleTransmission').value = inspectionFormData.vehicleTransmission || '';
+                document.getElementById('vehicleFuel').value = inspectionFormData.vehicleFuel || '';
+                document.getElementById('vehicleMileage').value = inspectionFormData.vehicleMileage || '';
+                
+                // Show active inspection UI
+                document.getElementById('startNewInspectionBtn').classList.add('hidden');
+                document.getElementById('inspectionNavTabs').classList.remove('hidden');
+                document.getElementById('vehicleDataSection').classList.add('hidden');
+                document.getElementById('activeInspectionSection').classList.remove('hidden');
+                document.getElementById('emptyInspectionState').classList.add('hidden');
+                
+                renderInspectionItems();
+                updateTabUI('checklist');
+                saveUserActiveInspection();
+                
+                showToast('📋 Inspeksi dilanjutkan dari yang sebelumnya');
+                console.log('✓ Active inspection restored');
+            } catch (e) {
+                console.error('❌ Error restoring inspection:', e);
+            }
+        }
+
+        async function saveUserActiveInspection() {
+            if (!currentUser || !inspectionFormData || inspectionStep !== 1) {
+                return;
+            }
+            
+            if (!currentUserActiveInspection) {
+                // Create new active inspection record
+                const activeInspection = {
+                    type: 'sheet_active_inspections',
+                    id: 'active_' + Date.now(),
+                    activeInspectionId: 'active_' + Date.now(),
+                    inspectorUsername: currentUser.username,
+                    vehicleType: inspectionFormData.vehicleType,
+                    vehiclePlate: inspectionFormData.vehiclePlate,
+                    formData: JSON.stringify(inspectionFormData),
+                    itemsData: JSON.stringify(inspectionItemsData),
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString()
+                };
+                
+                console.log('💾 Creating new active inspection:', activeInspection.activeInspectionId);
+                const result = await window.dataSdk.create(activeInspection);
+                if (result.isOk) {
+                    console.log('✓ Active inspection created');
+                }
+            } else {
+                // Update existing active inspection
+                const updatedInspection = {
+                    ...currentUserActiveInspection,
+                    vehicleType: inspectionFormData.vehicleType,
+                    vehiclePlate: inspectionFormData.vehiclePlate,
+                    formData: JSON.stringify(inspectionFormData),
+                    itemsData: JSON.stringify(inspectionItemsData),
+                    updatedAt: new Date().toISOString()
+                };
+                
+                console.log('🔄 Updating active inspection:', updatedInspection.activeInspectionId);
+                const result = await window.dataSdk.update(updatedInspection);
+                if (result.isOk) {
+                    console.log('✓ Active inspection updated');
+                }
+            }
+        }
+
+        function startNewInspection() {
+            console.log('📋 Starting new inspection...');
+            
+            if (!sheetItems || sheetItems.length === 0) {
+                showToast('⚠️ Belum ada item inspeksi', 'error');
+                return;
+            }
+            
+            inspectionStep = 0;
+            inspectionFormData = {};
+            inspectionItemsData = {};
+            
+            document.getElementById('customerName').value = '';
+            document.getElementById('customerPhone').value = '';
+            document.getElementById('vehicleType').value = '';
+            document.getElementById('vehiclePlate').value = '';
+            document.getElementById('vehicleYear').value = '';
+            document.getElementById('vehicleColor').value = '';
+            document.getElementById('vehicleTransmission').value = '';
+            document.getElementById('vehicleFuel').value = '';
+            document.getElementById('vehicleMileage').value = '';
+            
+            document.getElementById('startNewInspectionBtn').classList.add('hidden');
+            document.getElementById('inspectionNavTabs').classList.remove('hidden');
+            document.getElementById('vehicleDataSection').classList.remove('hidden');
+            document.getElementById('activeInspectionSection').classList.add('hidden');
+            document.getElementById('emptyInspectionState').classList.add('hidden');
+            
+            updateTabUI('vehicle');
+            console.log('✓ New inspection started');
+        }
+
+        function switchToVehicleDataTab() {
+            console.log('📋 Vehicle data tab');
+            document.getElementById('vehicleDataSection').classList.remove('hidden');
+            document.getElementById('activeInspectionSection').classList.add('hidden');
+            updateTabUI('vehicle');
+        }
+
+        function switchToChecklistTab() {
+            const customerName = document.getElementById('customerName').value.trim();
+            const customerPhone = document.getElementById('customerPhone').value.trim();
+            const vehicleType = document.getElementById('vehicleType').value.trim();
+            const vehiclePlate = document.getElementById('vehiclePlate').value.trim();
+            const vehicleYear = document.getElementById('vehicleYear').value.trim();
+            const vehicleColor = document.getElementById('vehicleColor').value.trim();
+            const vehicleTransmission = document.getElementById('vehicleTransmission').value.trim();
+            const vehicleFuel = document.getElementById('vehicleFuel').value.trim();
+            const vehicleMileage = document.getElementById('vehicleMileage').value.trim();
+            
+            if (!customerName || !customerPhone || !vehicleType || !vehiclePlate || !vehicleYear || !vehicleColor || !vehicleTransmission || !vehicleFuel || !vehicleMileage) {
+                showToast('⚠️ Lengkapi data kendaraan', 'error');
+                return;
+            }
+            
+            inspectionFormData = { customerName, customerPhone, vehicleType, vehiclePlate, vehicleYear, vehicleColor, vehicleTransmission, vehicleFuel, vehicleMileage };
+            
+            document.getElementById('vehicleDataSection').classList.add('hidden');
+            document.getElementById('activeInspectionSection').classList.remove('hidden');
+            
+            if (Object.keys(inspectionItemsData).length === 0) {
+                renderInspectionItems();
+            }
+            
+            updateTabUI('checklist');
+            saveUserActiveInspection();
+        }
+
+        function updateTabUI(activeTab) {
+            const tabVehicle = document.getElementById('tabVehicleData');
+            const tabChecklist = document.getElementById('tabChecklist');
+            
+            if (activeTab === 'vehicle') {
+                tabVehicle.classList.remove('border-gray-300', 'text-gray-600');
+                tabVehicle.classList.add('bg-white', 'border-2', 'border-blue-400', 'text-blue-700');
+                tabChecklist.classList.add('border-gray-300', 'text-gray-600');
+                tabChecklist.classList.remove('bg-white', 'border-blue-400', 'text-blue-700');
+            } else {
+                tabVehicle.classList.add('border-gray-300', 'text-gray-600');
+                tabVehicle.classList.remove('bg-white', 'border-blue-400', 'text-blue-700');
+                tabChecklist.classList.remove('border-gray-300', 'text-gray-600');
+                tabChecklist.classList.add('bg-white', 'border-2', 'border-blue-400', 'text-blue-700');
+            }
+        }
+
+        function proceedToStep2(e) {
+            if (e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            
+            console.log('📋 Proceeding to Step 2...');
+            
+            const customerName = document.getElementById('customerName').value.trim();
+            const customerPhone = document.getElementById('customerPhone').value.trim();
+            const vehicleType = document.getElementById('vehicleType').value.trim();
+            const vehiclePlate = document.getElementById('vehiclePlate').value.trim();
+            const vehicleYear = document.getElementById('vehicleYear').value.trim();
+            const vehicleColor = document.getElementById('vehicleColor').value.trim();
+            const vehicleTransmission = document.getElementById('vehicleTransmission').value.trim();
+            const vehicleFuel = document.getElementById('vehicleFuel').value.trim();
+            const vehicleMileage = document.getElementById('vehicleMileage').value.trim();
+            
+            console.log('📝 Field values:', {
+                customerName: `"${customerName}"`,
+                customerPhone: `"${customerPhone}"`,
+                vehicleType: `"${vehicleType}"`,
+                vehiclePlate: `"${vehiclePlate}"`,
+                vehicleYear: `"${vehicleYear}"`,
+                vehicleColor: `"${vehicleColor}"`,
+                vehicleTransmission: `"${vehicleTransmission}"`,
+                vehicleFuel: `"${vehicleFuel}"`,
+                vehicleMileage: `"${vehicleMileage}"`
+            });
+            
+            if (!customerName || !customerPhone || !vehicleType || !vehiclePlate || !vehicleYear || !vehicleColor || !vehicleTransmission || !vehicleFuel || !vehicleMileage) {
+                const missingFields = [];
+                if (!customerName) missingFields.push('Nama Pemesan');
+                if (!customerPhone) missingFields.push('No. WhatsApp');
+                if (!vehicleType) missingFields.push('Merk/Tipe');
+                if (!vehiclePlate) missingFields.push('No. Polisi');
+                if (!vehicleYear) missingFields.push('Tahun');
+                if (!vehicleColor) missingFields.push('Warna');
+                if (!vehicleTransmission) missingFields.push('Transmisi');
+                if (!vehicleFuel) missingFields.push('Bahan Bakar');
+                if (!vehicleMileage) missingFields.push('Odometer');
+                
+                showToast(`⚠️ Lengkapi: ${missingFields.join(', ')}`, 'error');
+                console.log('❌ Validation failed - missing fields:', missingFields);
+                return;
+            }
+            
+            console.log('✓ All fields valid');
+            inspectionFormData = { customerName, customerPhone, vehicleType, vehiclePlate, vehicleYear, vehicleColor, vehicleTransmission, vehicleFuel, vehicleMileage };
+            inspectionStep = 1;
+            
+            console.log('📝 Form data saved:', inspectionFormData);
+            console.log('Hiding vehicle section, showing inspection section...');
+            
+            document.getElementById('vehicleDataSection').classList.add('hidden');
+            document.getElementById('activeInspectionSection').classList.remove('hidden');
+            
+            console.log('Rendering inspection items...');
+            renderInspectionItems();
+            updateTabUI('checklist');
+            saveUserActiveInspection();
+            
+            console.log('✓ Step 2 ready - checklist items visible');
+            showToast('✓ Lanjut ke checklist item inspeksi');
+        }
+
+        function renderInspectionItems() {
+            console.log('📊 Rendering items...');
+            
+            const container = document.getElementById('categoriesInspectionList');
+            container.innerHTML = '';
+            
+            const vehicleDisplay = document.getElementById('vehicleNameDisplay');
+            vehicleDisplay.textContent = `🚗 ${inspectionFormData.vehicleType} - ${inspectionFormData.vehiclePlate}`;
+            
+            const categories = [];
+            allCategories.forEach(cat => {
+                const itemsInCat = allItems.filter(item => item.categoryId === cat.categoryId);
+                if (itemsInCat.length > 0) {
+                    categories.push({ category: cat, items: itemsInCat });
+                }
+            });
+            
+            if (categories.length === 0) {
+                container.innerHTML = '<div class="text-center text-gray-500 py-4">❌ Tidak ada kategori dengan items</div>';
+                return;
+            }
+            
+            categories.forEach(({ category, items }) => {
+                const categorySection = document.createElement('div');
+                categorySection.className = 'space-y-2';
+                
+                const header = document.createElement('div');
+                header.className = 'bg-gradient-to-r from-blue-600 to-blue-700 text-white px-4 py-2 rounded-lg font-bold text-sm';
+                header.textContent = `📁 ${category.categoryName} (${items.length} items)`;
+                categorySection.appendChild(header);
+                
+                items.forEach(item => {
+                    const itemCard = createInspectionItemElement(item);
+                    categorySection.appendChild(itemCard);
+                });
+                
+                container.appendChild(categorySection);
+            });
+            
+            updateProgressBar();
+            lucide.createIcons();
+        }
+
+        function createInspectionItemElement(item) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'space-y-2';
+            wrapper.dataset.itemid = item.__backendId;
+            
+            const itemStatus = inspectionItemsData[item.__backendId];
+            const itemData = inspectionItemsData[item.__backendId + '_data'] || {};
+            
+            let borderClass = 'border-gray-200';
+            let bgClass = 'bg-white';
+            
+            if (itemStatus === 'good') {
+                borderClass = 'border-green-400';
+                bgClass = 'bg-green-50';
+            } else if (itemStatus === 'warning') {
+                borderClass = 'border-yellow-400';
+                bgClass = 'bg-yellow-50';
+            } else if (itemStatus === 'bad') {
+                borderClass = 'border-red-400';
+                bgClass = 'bg-red-50';
+            }
+            
+            const card = document.createElement('div');
+            card.className = `card-modern rounded-lg border-2 p-3 ${borderClass} ${bgClass} ml-2`;
+            
+            const info = document.createElement('div');
+            info.className = 'flex items-start justify-between gap-3';
+            
+            const title = document.createElement('div');
+            title.className = 'flex-1';
+            title.innerHTML = `
+                <p class="font-bold text-sm text-gray-900">${item.itemName}</p>
+                <p class="text-xs text-gray-600 mt-1">Kritis: ${item.criticalLevel || 'Low'}</p>
+            `;
+            
+            const buttons = document.createElement('div');
+            buttons.className = 'flex gap-2 flex-shrink-0';
+            
+            ['good', 'warning', 'bad'].forEach(status => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.dataset.itemId = item.__backendId;
+                btn.dataset.status = status;
+                btn.className = `w-12 h-12 rounded-lg text-lg font-bold transition-all cursor-pointer shadow-md hover:shadow-lg`;
+                
+                if (status === 'good') {
+                    btn.innerHTML = '🟢';
+                    btn.className += itemStatus === 'good' ? ' bg-green-500 scale-125 ring-4 ring-green-300' : ' bg-green-100 hover:bg-green-200';
+                } else if (status === 'warning') {
+                    btn.innerHTML = '🟡';
+                    btn.className += itemStatus === 'warning' ? ' bg-yellow-500 scale-125 ring-4 ring-yellow-300' : ' bg-yellow-100 hover:bg-yellow-200';
+                } else {
+                    btn.innerHTML = '🔴';
+                    btn.className += itemStatus === 'bad' ? ' bg-red-500 scale-125 ring-4 ring-red-300' : ' bg-red-100 hover:bg-red-200';
+                }
+                
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    setItemStatus(item.__backendId, status);
+                });
+                buttons.appendChild(btn);
+            });
+            
+            info.appendChild(title);
+            info.appendChild(buttons);
+            card.appendChild(info);
+            wrapper.appendChild(card);
+            
+            if (itemStatus) {
+                const rawDamageStr = String(item.damageTypeId || '').trim();
+                const damages = rawDamageStr.split(',').map(d => d.trim()).filter(d => d.length > 0);
+                
+                const dropdownContainer = document.createElement('div');
+                dropdownContainer.className = 'ml-2 mt-3 space-y-3 p-4 bg-gradient-to-br from-blue-50 to-cyan-50 border-2 border-blue-300 rounded-lg';
+                
+                if ((itemStatus === 'warning' || itemStatus === 'bad') && damages.length > 0) {
+                    const damageLabel = document.createElement('div');
+                    damageLabel.className = 'text-xs font-bold text-blue-900 flex items-center gap-2';
+                    damageLabel.innerHTML = '🔧 Pilih Jenis Kerusakan:';
+                    dropdownContainer.appendChild(damageLabel);
+                    
+                    damages.forEach(damage => {
+                        const isSelected = itemData.selectedDamage === damage;
+                        
+                        const btn = document.createElement('button');
+                        btn.type = 'button';
+                        btn.dataset.itemId = item.__backendId;
+                        btn.dataset.damage = damage;
+                        btn.className = `w-full text-left px-3 py-2 rounded-lg font-semibold text-xs transition-all border-2 ${
+                            isSelected
+                                ? 'bg-blue-600 border-blue-700 text-white'
+                                : 'bg-white border-blue-300 text-blue-900 hover:bg-blue-100'
+                        }`;
+                        btn.textContent = `${isSelected ? '✓' : '○'} ${damage}`;
+                        
+                        btn.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            setItemDamage(item.__backendId, damage);
+                        });
+                        
+                        dropdownContainer.appendChild(btn);
+                    });
+                }
+                
+                const notesInput = document.createElement('textarea');
+                notesInput.placeholder = 'Tambahkan catatan tentang kondisi...';
+                notesInput.className = 'w-full px-3 py-2 border-2 border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-xs font-medium resize-none';
+                notesInput.rows = 2;
+                notesInput.value = itemData.notes || '';
+                notesInput.addEventListener('input', (e) => {
+                    if (!inspectionItemsData[item.__backendId + '_data']) {
+                        inspectionItemsData[item.__backendId + '_data'] = {};
+                    }
+                    inspectionItemsData[item.__backendId + '_data'].notes = e.target.value;
+                });
+                dropdownContainer.appendChild(notesInput);
+                
+                const photoContainer = document.createElement('div');
+                photoContainer.className = 'space-y-3';
+                
+                const multiPhotoInput = document.createElement('input');
+                multiPhotoInput.type = 'file';
+                multiPhotoInput.accept = 'image/*';
+                multiPhotoInput.multiple = true;
+                multiPhotoInput.id = 'multi_photo_' + item.__backendId;
+                multiPhotoInput.className = 'hidden';
+                multiPhotoInput.addEventListener('change', (e) => handlePhotoCapture(item.__backendId, e));
+                photoContainer.appendChild(multiPhotoInput);
+                
+                const photoBtn = document.createElement('button');
+                photoBtn.type = 'button';
+                photoBtn.className = 'w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white rounded-lg font-bold text-sm transition-all shadow-md hover:shadow-lg';
+                photoBtn.innerHTML = '<i data-lucide="camera" style="width: 18px; height: 18px;"></i> <span>Ambil Foto</span>';
+                photoBtn.addEventListener('click', () => multiPhotoInput.click());
+                photoContainer.appendChild(photoBtn);
+                
+                if (itemData.photos && itemData.photos.length > 0) {
+                    const galleryDiv = document.createElement('div');
+                    galleryDiv.className = 'grid grid-cols-3 gap-2';
+                    
+                    itemData.photos.forEach((photo, photoIndex) => {
+                        const previewDiv = document.createElement('div');
+                        previewDiv.className = 'relative rounded-lg overflow-hidden border-2 border-blue-300 bg-gray-100';
+                        previewDiv.innerHTML = `
+                            <img src="${photo}" alt="Photo ${photoIndex + 1}" class="w-full h-20 object-cover">
+                            <div class="absolute inset-0 bg-black/0 hover:bg-black/40 transition-all flex items-center justify-center opacity-0 hover:opacity-100">
+                                <button type="button" class="bg-red-600 hover:bg-red-700 text-white rounded-full w-8 h-8 flex items-center justify-center text-lg font-bold transition-all" onclick="removePhoto('${item.__backendId}', ${photoIndex})">
+                                    ×
+                                </button>
+                            </div>
+                        `;
+                        galleryDiv.appendChild(previewDiv);
+                    });
+                    
+                    const countBadge = document.createElement('div');
+                    countBadge.className = 'bg-blue-100 border-2 border-blue-300 rounded-lg p-2 text-center';
+                    countBadge.innerHTML = `<p class="text-lg font-bold text-blue-700">${itemData.photos.length}</p><p class="text-xs text-blue-600 font-semibold">Foto</p>`;
+                    galleryDiv.appendChild(countBadge);
+                    
+                    photoContainer.appendChild(galleryDiv);
+                }
+                
+                dropdownContainer.appendChild(photoContainer);
+                wrapper.appendChild(dropdownContainer);
+            }
+            
+            return wrapper;
+        }
+
+        function setItemStatus(itemId, status) {
+            inspectionItemsData[itemId] = status;
+            
+            if (status === 'good') {
+                delete inspectionItemsData[itemId + '_data'];
+            }
+            
+            const itemElement = document.querySelector(`[data-itemid="${itemId}"]`);
+            if (itemElement) {
+                const item = allItems.find(i => i.__backendId === itemId);
+                if (item) {
+                    const newElement = createInspectionItemElement(item);
+                    itemElement.replaceWith(newElement);
+                }
+            }
+            
+            updateProgressBar();
+            saveUserActiveInspection();
+            lucide.createIcons();
+        }
+
+        function setItemDamage(itemId, damage) {
+            if (!inspectionItemsData[itemId + '_data']) {
+                inspectionItemsData[itemId + '_data'] = {};
+            }
+            inspectionItemsData[itemId + '_data'].selectedDamage = damage;
+            
+            const itemElement = document.querySelector(`[data-itemid="${itemId}"]`);
+            if (itemElement) {
+                const item = allItems.find(i => i.__backendId === itemId);
+                if (item) {
+                    const newElement = createInspectionItemElement(item);
+                    itemElement.replaceWith(newElement);
+                }
+            }
+            
+            updateProgressBar();
+            saveUserActiveInspection();
+            lucide.createIcons();
+        }
+
+        window.handlePhotoCapture = (itemId, e) => {
+            const files = Array.from(e.target.files);
+            if (files.length === 0) return;
+            
+            let processedCount = 0;
+            const photos = [];
+            
+            files.forEach((file) => {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    photos.push(event.target.result);
+                    processedCount++;
+                    
+                    if (processedCount === files.length) {
+                        if (!inspectionItemsData[itemId + '_data']) {
+                            inspectionItemsData[itemId + '_data'] = {};
+                        }
+                        
+                        if (!inspectionItemsData[itemId + '_data'].photos) {
+                            inspectionItemsData[itemId + '_data'].photos = [];
+                        }
+                        
+                        inspectionItemsData[itemId + '_data'].photos.push(...photos);
+                        
+                        const itemElement = document.querySelector(`[data-itemid="${itemId}"]`);
+                        if (itemElement) {
+                            const item = allItems.find(i => i.__backendId === itemId);
+                            if (item) {
+                                const newElement = createInspectionItemElement(item);
+                                itemElement.replaceWith(newElement);
+                            }
+                        }
+                        
+                        updateProgressBar();
+                        saveUserActiveInspection();
+                        lucide.createIcons();
+                        showToast(`✓ ${files.length} foto ditambahkan!`);
+                    }
+                };
+                reader.readAsDataURL(file);
+            });
+        };
+
+        window.removePhoto = (itemId, photoIndex) => {
+            if (inspectionItemsData[itemId + '_data'] && inspectionItemsData[itemId + '_data'].photos) {
+                inspectionItemsData[itemId + '_data'].photos.splice(photoIndex, 1);
+            }
+            
+            const itemElement = document.querySelector(`[data-itemid="${itemId}"]`);
+            if (itemElement) {
+                const item = allItems.find(i => i.__backendId === itemId);
+                if (item) {
+                    const newElement = createInspectionItemElement(item);
+                    itemElement.replaceWith(newElement);
+                }
+            }
+            
+            updateProgressBar();
+            saveUserActiveInspection();
+            lucide.createIcons();
+        };
+
+        function updateProgressBar() {
+            const total = allItems.length;
+            const completed = Object.values(inspectionItemsData).filter(s => typeof s === 'string').length;
+            const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
+            
+            document.getElementById('progressBar').style.width = percentage + '%';
+            document.getElementById('progressText').textContent = `${completed} / ${total}`;
+        }
+
+        function calculateValue() {
+            const total = allItems.length;
+            if (total === 0) return 100;
+            
+            let goodCount = 0, warningCount = 0, badCount = 0;
+            
+            Object.entries(inspectionItemsData).forEach(([key, value]) => {
+                if (typeof value === 'string') {
+                    if (value === 'good') goodCount++;
+                    else if (value === 'warning') warningCount++;
+                    else if (value === 'bad') badCount++;
+                }
+            });
+            
+            return Math.round((goodCount * 100 + warningCount * 60 + badCount * 20) / total);
+        }
+
+        function submitInspection(e) {
+            if (e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            
+            console.log('📤 [1] STARTING: submitInspection() called');
+            console.log('[2] Form data:', inspectionFormData);
+            console.log('[3] Items data keys:', Object.keys(inspectionItemsData));
+            console.log('[4] Items data:', inspectionItemsData);
+            
+            const total = allItems.length;
+            const completed = Object.values(inspectionItemsData).filter(s => typeof s === 'string').length;
+            
+            console.log(`[5] Progress check - completed: ${completed}, total: ${total}`);
+            
+            if (completed < total) {
+                const remaining = total - completed;
+                console.log(`[6] NOT READY: ${remaining} items still need completion`);
+                showToast(`⚠️ Selesaikan ${remaining} item lagi`, 'error');
+                return;
+            }
+            
+            console.log('[7] ALL ITEMS COMPLETED - proceeding with submission');
+            const inspectionId = 'insp_' + Date.now();
+            const inspectionRecord = {
+                type: 'inspection',
+                id: inspectionId,
+                inspectionId: inspectionId,
+                inspectorUsername: currentUser.username,
+                customerName: inspectionFormData.customerName,
+                customerPhone: inspectionFormData.customerPhone,
+                vehicleType: inspectionFormData.vehicleType,
+                vehiclePlate: inspectionFormData.vehiclePlate,
+                vehicleYear: inspectionFormData.vehicleYear,
+                vehicleColor: inspectionFormData.vehicleColor,
+                vehicleTransmission: inspectionFormData.vehicleTransmission,
+                vehicleFuel: inspectionFormData.vehicleFuel,
+                vehicleMileage: inspectionFormData.vehicleMileage,
+                issues: JSON.stringify(inspectionItemsData),
+                value: calculateValue(),
+                status: 'completed',
+                inspectionDate: new Date().toISOString(),
+                createdAt: new Date().toISOString()
+            };
+            
+            console.log('[8] Inspection record created with ID:', inspectionId);
+            console.log('[9] Record ready for database:', inspectionRecord);
+            console.log('[10] Calling submitInspectionData()...');
+            submitInspectionData(inspectionRecord);
+        }
+
+        async function submitInspectionData(record) {
+            console.log('💾 [1] STARTING: Saving inspection to database...');
+            console.log('[2] Inspection record:', record);
+            const btn = document.getElementById('submitInspectionBtn');
+            const originalHTML = btn.innerHTML;
+            
+            btn.disabled = true;
+            btn.innerHTML = '<div style="display: inline-block; width: 16px; height: 16px; border: 2px solid white; border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite;"></div> <span>Menyimpan...</span>';
+            
+            try {
+                console.log('[3] Calling window.dataSdk.create()...');
+                const result = await window.dataSdk.create(record);
+                console.log('[4] dataSdk.create() returned:', result);
+                
+                if (result.isOk) {
+                    console.log('✅ [5] SUCCESS: Inspection saved successfully');
+                    console.log('[6] Result data:', result.data);
+                    btn.disabled = false;
+                    btn.innerHTML = originalHTML;
+                    
+                    // Delete active inspection after successful submission
+                    if (currentUserActiveInspection) {
+                        console.log('[7] Deleting active inspection...');
+                        const deleteResult = await window.dataSdk.delete(currentUserActiveInspection);
+                        if (deleteResult.isOk) {
+                            console.log('✓ Active inspection deleted');
+                        }
+                    }
+                    
+                    showToast('✓ Inspeksi berhasil disimpan!');
+                    
+                    console.log('[8] Waiting 300ms before showing report...');
+                    setTimeout(() => {
+                        console.log('[9] Calling showReportModal()...');
+                        showReportModal(record);
+                        console.log('[10] showReportModal() completed');
+                    }, 300);
+                } else {
+                    console.error('❌ [ERROR-5] Save failed');
+                    console.error('[6] Error details:', result.error);
+                    console.error('[6a] Error message:', result.error?.message);
+                    console.error('[6b] Full error object:', result.error);
+                    btn.disabled = false;
+                    btn.innerHTML = originalHTML;
+                    showToast('❌ Gagal menyimpan inspeksi: ' + (result.error?.message || 'Unknown error'), 'error');
+                }
+            } catch (error) {
+                console.error('💥 [EXCEPTION] Exception occurred:', error);
+                console.error('[detail] Error message:', error.message);
+                console.error('[detail] Error stack:', error.stack);
+                btn.disabled = false;
+                btn.innerHTML = originalHTML;
+                showToast('❌ Error: ' + error.message, 'error');
+            }
+        }
+
+        function showReportModal(inspectionRecord) {
+            console.log('🎯 Showing report modal for inspection:', inspectionRecord.inspectionId);
+            generateAndShowReport(inspectionRecord);
+            attachReportEventListeners();
+        }
+
+        function attachReportEventListeners() {
+            const modal = document.getElementById('reportModal');
+            const closeBtn = document.getElementById('closeReportBtn');
+            const printBtn = document.getElementById('printReportBtn');
+            const downloadBtn = document.getElementById('downloadReportBtn');
+            const closeActionBtn = document.getElementById('closeReportBtnAction');
+            
+            if (closeBtn) closeBtn.addEventListener('click', closeReportModalAction);
+            if (printBtn) printBtn.addEventListener('click', printReportAction);
+            if (downloadBtn) downloadBtn.addEventListener('click', downloadReportAction);
+            if (closeActionBtn) closeActionBtn.addEventListener('click', closeReportModalAction);
+            
+            if (modal) {
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) closeReportModalAction();
+                });
+            }
+        }
+
+        function closeReportModalAction(e) {
+            if (e) e.preventDefault();
+            
+            const modal = document.getElementById('reportModal');
+            modal.classList.remove('active');
+            modal.classList.add('hidden');
+            modal.style.display = 'none';
+            modal.style.visibility = 'hidden';
+            document.body.style.overflow = 'auto';
+            
+            inspectionStep = 0;
+            inspectionFormData = null;
+            inspectionItemsData = {};
+            currentUserActiveInspection = null;
+            
+            document.getElementById('inspectionNavTabs').classList.add('hidden');
+            document.getElementById('vehicleDataSection').classList.add('hidden');
+            document.getElementById('activeInspectionSection').classList.add('hidden');
+            document.getElementById('emptyInspectionState').classList.remove('hidden');
+            document.getElementById('startNewInspectionBtn').classList.remove('hidden');
+            
+            showToast('✓ Inspeksi baru siap dimulai');
+        }
+
+        function printReportAction(e) {
+            if (e) e.preventDefault();
+            window.print();
+        }
+
+        function downloadReportAction(e) {
+            if (e) e.preventDefault();
+            
+            const reportContent = document.getElementById('reportContent');
+            const text = reportContent.innerText || reportContent.textContent;
+            const link = document.createElement('a');
+            link.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(text);
+            link.download = `laporan_inspeksi_${Date.now()}.txt`;
+            link.click();
+            
+            showToast('✓ Laporan diunduh!');
+        }
+
+        function cancelInspection() {
+            if (currentUserActiveInspection) {
+                // If there's an active inspection, just go back to main view
+                inspectionStep = 0;
+                inspectionFormData = null;
+                inspectionItemsData = {};
+                
+                document.getElementById('inspectionNavTabs').classList.add('hidden');
+                document.getElementById('vehicleDataSection').classList.add('hidden');
+                document.getElementById('activeInspectionSection').classList.add('hidden');
+                document.getElementById('emptyInspectionState').classList.remove('hidden');
+                document.getElementById('startNewInspectionBtn').classList.remove('hidden');
+                
+                showToast('📋 Kembali ke menu inspeksi');
+            } else {
+                // No active inspection, just clear and go back
+                inspectionStep = 0;
+                inspectionFormData = null;
+                inspectionItemsData = {};
+                
+                document.getElementById('inspectionNavTabs').classList.add('hidden');
+                document.getElementById('vehicleDataSection').classList.add('hidden');
+                document.getElementById('activeInspectionSection').classList.add('hidden');
+                document.getElementById('emptyInspectionState').classList.remove('hidden');
+                document.getElementById('startNewInspectionBtn').classList.remove('hidden');
+                
+                showToast('Inspeksi dibatalkan');
+            }
+        }
+
+        
+        // Render inspection history
+        function renderInspectionHistory() {
+            const list = document.getElementById('inspectionHistoryList');
+            if (!list) return;
+
+            list.innerHTML = '';
+            
+            // Filter inspections based on user role
+            let filteredInspections = [];
+            if (currentUser && currentUser.role === 'admin') {
+                // Admin sees all inspections
+                filteredInspections = allInspections;
+            } else if (currentUser && currentUser.role === 'inspector') {
+                // Inspector sees only their own inspections
+                filteredInspections = allInspections.filter(i => i.inspectorUsername === currentUser.username);
+            }
+            
+            if (filteredInspections.length === 0) {
+                list.innerHTML = `
+                    <div class="col-span-full">
+                        <div class="relative overflow-hidden rounded-2xl shadow-lg bg-gradient-to-br from-blue-600 via-cyan-600 to-blue-700 p-12 text-center text-white">
+                            <div class="absolute -top-40 -right-40 w-80 h-80 bg-white/10 rounded-full blur-3xl"></div>
+                            <div class="relative z-10">
+                                <div class="mb-4 text-6xl">📋</div>
+                                <h3 class="text-3xl font-black mb-2">Belum Ada Riwayat</h3>
+                                <p class="text-white/90 mb-6">${currentUser && currentUser.role === 'admin' ? 'Belum ada inspeksi dari tim' : 'Mulai inspeksi kendaraan untuk melihat riwayatnya di sini'}</p>
+                                <button onclick="switchView('inspectionView')" class="inline-flex items-center gap-2 px-6 py-3 bg-white text-blue-700 rounded-xl font-bold transition-all transform hover:scale-105 shadow-lg">
+                                    <i data-lucide="play-circle" style="width: 20px; height: 20px;"></i>
+                                    <span>${currentUser && currentUser.role === 'admin' ? 'Lihat Manual' : 'Mulai Inspeksi Pertama'}</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                lucide.createIcons();
+                return;
+            }
+
+            filteredInspections.slice().reverse().forEach(inspection => {
+                const inspDate = new Date(inspection.inspectionDate);
+                const formattedDate = inspDate.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+                const formattedTime = inspDate.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+                
+                const statusEmoji = inspection.value >= 80 ? '🟢' : inspection.value >= 50 ? '🟡' : '🔴';
+                const statusText = inspection.value >= 80 ? 'Baik' : inspection.value >= 50 ? 'Sedang' : 'Perlu Perbaikan';
+                const borderColor = inspection.value >= 80 ? '#10b981' : inspection.value >= 50 ? '#f59e0b' : '#ef4444';
+                
+                const card = document.createElement('div');
+                card.className = 'card-modern rounded-lg shadow-md hover:shadow-lg transition-all border-l-4 overflow-hidden cursor-pointer group';
+                card.style.borderColor = borderColor;
+                
+                card.innerHTML = `
+                    <div class="bg-gradient-to-r from-blue-50 to-cyan-50 p-3 flex items-center justify-between gap-3">
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 mb-1">
+                                <h3 class="font-bold text-gray-900 text-sm truncate">${inspection.vehiclePlate}</h3>
+                                <span class="text-xl group-hover:scale-110 transition-transform flex-shrink-0">${statusEmoji}</span>
+                            </div>
+                            <p class="text-xs text-gray-600">${inspection.vehicleType} • ${inspection.vehicleYear}</p>
+                        </div>
+                        <div class="text-right flex-shrink-0">
+                            <p class="text-lg font-black" style="color: ${borderColor};">${inspection.value}%</p>
+                            <p class="text-xs font-bold text-gray-600 mt-0.5">${statusText}</p>
+                        </div>
+                    </div>
+                    <div class="px-3 py-2 bg-white border-t border-gray-100 space-y-2">
+                        <div class="flex items-center justify-between text-xs">
+                            <div class="flex items-center gap-1 text-gray-700">
+                                <i data-lucide="user" style="width: 14px; height: 14px; color: #6b7280;"></i>
+                                <span class="font-semibold truncate">${inspection.customerName}</span>
+                            </div>
+                            <span class="text-gray-500 font-medium">${formattedDate}</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
+                            <div class="bg-gradient-to-r h-full rounded-full transition-all" style="background: linear-gradient(to right, ${borderColor}); width: ${inspection.value}%;"></div>
+                        </div>
+                        <button onclick="viewInspectionReport('${inspection.__backendId}')" class="w-full px-3 py-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg font-bold text-xs transition-all transform hover:scale-105 active:scale-95 flex items-center justify-center gap-1.5 shadow-sm">
+                            <i data-lucide="file-text" style="width: 14px; height: 14px;"></i>
+                            <span>Laporan</span>
+                        </button>
+                    </div>
+                `;
+                
+                list.appendChild(card);
+            });
+            
+            lucide.createIcons();
+        }
+
+        function generateAndShowReport(inspection) {
+            console.log('📊 [1] STARTING: Generating report for inspection:', inspection.inspectionId);
+            console.log('🔍 [2] Full inspection object:', inspection);
+            
+            const reportModal = document.getElementById('reportModal');
+            const reportContent = document.getElementById('reportContent');
+            
+            console.log('🔍 [3] DOM Elements found:');
+            console.log('   - reportModal exists:', !!reportModal);
+            console.log('   - reportContent exists:', !!reportContent);
+            console.log('   - reportModal class:', reportModal?.className);
+            console.log('   - reportModal display:', window.getComputedStyle(reportModal)?.display);
+            
+            if (!reportModal || !reportContent) {
+                console.error('❌ [ERROR] Report modal elements not found!');
+                console.error('   reportModal:', reportModal);
+                console.error('   reportContent:', reportContent);
+                return;
+            }
+            
+            console.log('✅ [4] Both elements found, continuing...');
+            
+            let itemsData = {};
+            try {
+                itemsData = JSON.parse(inspection.issues || '{}');
+                console.log('✓ [5] Parsed items data:', itemsData);
+                console.log('📋 [6] All items count:', allItems.length);
+                console.log('📁 [7] All categories count:', allCategories.length);
+            } catch (e) {
+                console.warn('⚠️ [WARNING] Could not parse issues JSON:', e);
+                console.log('[8] Raw issues string:', inspection.issues);
+                itemsData = {};
+            }
+            
+            console.log('🎨 [9] Building HTML report...');
+            const inspDate = new Date(inspection.inspectionDate || new Date());
+            const score = parseInt(inspection.value) || 0;
+            const scoreEmoji = score >= 80 ? '🟢' : score >= 50 ? '🟡' : '🔴';
+            const scoreColor = score >= 80 ? '#10b981' : score >= 50 ? '#f59e0b' : '#ef4444';
+            
+            let html = `
+            <div style="background: linear-gradient(135deg, #9333ea 0%, #4f46e5 100%); color: white; padding: 24px; border-radius: 16px; margin-bottom: 16px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.1);">
+                <div style="font-size: 48px; margin-bottom: 8px;">✓</div>
+                <h2 style="font-size: 24px; font-weight: 900; margin-bottom: 4px;">LAPORAN INSPEKSI</h2>
+                <p style="font-size: 14px; color: #e9d5ff; font-weight: 600;">AutoCheck Vehicle Inspection Report</p>
+                <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(168, 85, 247, 0.5);">
+                    <p style="font-size: 12px; font-weight: 700;">ID: ${inspection.inspectionId || 'N/A'}</p>
+                    <p style="font-size: 12px; color: #e9d5ff;">${inspDate.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                </div>
+            </div>
+            
+            <div style="background: linear-gradient(to right, #f0f9ff, #f0f9ff); padding: 16px; border-radius: 12px; border: 2px solid #bfdbfe; margin-bottom: 16px;">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                    <div>
+                        <p style="font-size: 12px; font-weight: 700; color: #374151; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.05em;">Kondisi Kendaraan</p>
+                        <p style="font-size: 36px; font-weight: 900; color: ${scoreColor};">${score}%</p>
+                    </div>
+                    <div style="font-size: 48px;">${scoreEmoji}</div>
+                </div>
+                <div style="width: 100%; background-color: #d1d5db; border-radius: 9999px; height: 12px; overflow: hidden;">
+                    <div style="background-color: ${scoreColor}; height: 100%; border-radius: 9999px; width: ${score}%; transition: width 0.3s ease;"></div>
+                </div>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px;">
+                <div style="background: white; padding: 12px; border-radius: 8px; border: 1px solid #e5e7eb;">
+                    <p style="font-size: 12px; font-weight: 700; color: #4b5563; margin-bottom: 4px; text-transform: uppercase;">Polisi</p>
+                    <p style="font-size: 14px; font-weight: 900; color: #1e40af;">${inspection.vehiclePlate || '-'}</p>
+                </div>
+                <div style="background: white; padding: 12px; border-radius: 8px; border: 1px solid #e5e7eb;">
+                    <p style="font-size: 12px; font-weight: 700; color: #4b5563; margin-bottom: 4px; text-transform: uppercase;">Tipe</p>
+                    <p style="font-size: 12px; font-weight: 700; color: #111827;">${inspection.vehicleType || '-'}</p>
+                </div>
+                <div style="background: white; padding: 12px; border-radius: 8px; border: 1px solid #e5e7eb;">
+                    <p style="font-size: 12px; font-weight: 700; color: #4b5563; margin-bottom: 4px; text-transform: uppercase;">Tahun</p>
+                    <p style="font-size: 12px; font-weight: 700; color: #111827;">${inspection.vehicleYear || '-'}</p>
+                </div>
+                <div style="background: white; padding: 12px; border-radius: 8px; border: 1px solid #e5e7eb;">
+                    <p style="font-size: 12px; font-weight: 700; color: #4b5563; margin-bottom: 4px; text-transform: uppercase;">Warna</p>
+                    <p style="font-size: 12px; font-weight: 700; color: #111827;">${inspection.vehicleColor || '-'}</p>
+                </div>
+            </div>
+            
+            <div style="background: #fef3c7; padding: 12px; border-radius: 8px; border: 1px solid #fcd34d; margin-bottom: 16px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; font-size: 12px;">
+                    <div>
+                        <p style="font-weight: 700; color: #92400e; margin-bottom: 4px;">INSPEKTUR</p>
+                        <p style="font-weight: 600; color: #111827;">@${inspection.inspectorUsername || '-'}</p>
+                    </div>
+                    <div>
+                        <p style="font-weight: 700; color: #92400e; margin-bottom: 4px;">TANGGAL</p>
+                        <p style="font-weight: 600; color: #111827;">${inspDate.toLocaleDateString('id-ID', { day: '2-digit', month: 'short' })}</p>
+                    </div>
+                    <div>
+                        <p style="font-weight: 700; color: #92400e; margin-bottom: 4px;">JAM</p>
+                        <p style="font-weight: 600; color: #111827;">${inspDate.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="background: #f0f9ff; padding: 12px; border-radius: 8px; border-left: 4px solid #0284c7; margin-bottom: 16px;">
+                <p style="font-size: 12px; font-weight: 700; color: #0c4a6e; margin-bottom: 6px;">👤 PEMESAN</p>
+                <p style="font-size: 14px; font-weight: 600; color: #111827;">${inspection.customerName || '-'}</p>
+                <p style="font-size: 12px; color: #4b5563; margin-top: 4px;">${inspection.customerPhone || '-'}</p>
+            </div>
+            `;
+            
+            const categoryMap = new Map();
+            allCategories.forEach(cat => {
+                const itemsInCat = allItems.filter(item => item.categoryId === cat.categoryId);
+                if (itemsInCat.length > 0) {
+                    categoryMap.set(cat.categoryId, { category: cat, items: itemsInCat });
+                }
+            });
+            
+            let hasAnyItems = false;
+            categoryMap.forEach(({ category, items }) => {
+                let categoryHtml = `<div style="background: #1e3a8a; color: white; padding: 12px; border-radius: 8px 8px 0 0; font-weight: 700; font-size: 12px;">📁 ${category.categoryName}</div>`;
+                let hasItems = false;
+                
+                items.forEach(item => {
+                    const status = itemsData[item.__backendId];
+                    if (!status) return;
+                    
+                    hasItems = true;
+                    hasAnyItems = true;
+                    const itemDetail = itemsData[item.__backendId + '_data'] || {};
+                    const statusMap = {
+                        'good': { emoji: '🟢', text: 'BAIK', bg: '#dcfce7', color: '#166534' },
+                        'warning': { emoji: '🟡', text: 'PERLU PERHATIAN', bg: '#fef3c7', color: '#b45309' },
+                        'bad': { emoji: '🔴', text: 'RUSAK', bg: '#fee2e2', color: '#991b1b' }
+                    };
+                    const statusInfo = statusMap[status] || statusMap['good'];
+                    
+                    categoryHtml += `
+                    <div style="background: white; border-bottom: 1px solid #e5e7eb; padding: 12px; display: flex; flex-direction: column; gap: 8px;">
+                        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;">
+                            <div style="flex: 1;">
+                                <p style="font-weight: 700; color: #111827; font-size: 12px;">${item.itemName}</p>
+                                <p style="font-size: 12px; color: #4b5563;">Kritis: ${item.criticalLevel || 'Rendah'}</p>
+                            </div>
+                            <div style="background-color: ${statusInfo.bg}; color: ${statusInfo.color}; text-align: center; padding: 4px 8px; border-radius: 4px; font-weight: 700; font-size: 12px; white-space: nowrap;">
+                                ${statusInfo.emoji}
+                            </div>
+                        </div>
+                    `;
+                    
+                    if (itemDetail.selectedDamage) {
+                        categoryHtml += `<div style="background: #fee2e2; border-left: 2px solid #ef4444; padding: 8px; padding-left: 8px;"><p style="font-size: 12px; font-weight: 700; color: #7f1d1d;">🔧 Kerusakan: ${itemDetail.selectedDamage}</p></div>`;
+                    }
+                    
+                    if (itemDetail.notes) {
+                        categoryHtml += `<div style="background: #fef3c7; border-left: 2px solid #f59e0b; padding: 8px; padding-left: 8px;"><p style="font-size: 12px; color: #78350f;">📝 ${itemDetail.notes}</p></div>`;
+                    }
+                    
+                    if (itemDetail.photos && Array.isArray(itemDetail.photos) && itemDetail.photos.length > 0) {
+                        categoryHtml += `<div><p style="font-size: 12px; font-weight: 700; color: #111827; margin-bottom: 8px;">📸 ${itemDetail.photos.length} foto</p><div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px;">`;
+                        itemDetail.photos.forEach(photo => {
+                            categoryHtml += `<img src="${photo}" alt="Foto" style="width: 100%; height: 50px; object-fit: cover; border-radius: 4px; border: 1px solid #e5e7eb;">`;
+                        });
+                        categoryHtml += `</div></div>`;
+                    }
+                    
+                    categoryHtml += `</div>`;
+                });
+                
+                if (hasItems) {
+                    categoryHtml += `<div style="background: #dbeafe; padding: 8px; border-radius: 0 0 8px 8px; font-size: 12px; color: #0c4a6e; font-weight: 600;">✓ Selesai</div>`;
+                    html += categoryHtml + '<div style="margin-bottom: 12px;"></div>';
+                }
+            });
+            
+            if (!hasAnyItems) {
+                html += `<div style="background: #f3f4f6; padding: 12px; border-radius: 8px; text-align: center; font-size: 12px; color: #6b7280; font-weight: 600;">No items recorded</div>`;
+            }
+            
+            html += `<div style="background: #1f2937; color: white; padding: 12px; border-radius: 8px; margin-top: 16px; text-align: center; font-size: 12px;"><p style="font-weight: 700;">✓ LAPORAN SELESAI</p><p style="color: #d1d5db;">AutoCheck Vehicle Inspection System</p></div>`;
+            
+            console.log('📝 [10] Generated HTML length:', html.length);
+            console.log('[11] Setting reportContent.innerHTML...');
+            reportContent.innerHTML = html;
+            console.log('✓ [12] HTML injected into reportContent');
+            
+            // Verify content was added
+            if (reportContent.children.length > 0) {
+                console.log('✓ [13] Report content has', reportContent.children.length, 'child elements');
+            } else {
+                console.error('❌ [ERROR-13] Report content is still empty!');
+                console.error('reportContent element:', reportContent);
+                console.error('reportContent innerHTML:', reportContent.innerHTML.substring(0, 100));
+            }
+            
+            console.log('[14] Setting modal visibility styles...');
+            // Force modal visibility with explicit styles
+            reportModal.classList.remove('hidden');
+            console.log('[15] Removed "hidden" class');
+            reportModal.classList.add('active');
+            console.log('[16] Added "active" class');
+            
+            // Set inline styles for absolute control
+            reportModal.style.display = 'flex';
+            reportModal.style.visibility = 'visible';
+            reportModal.style.opacity = '1';
+            reportModal.style.position = 'fixed';
+            reportModal.style.inset = '0px';
+            reportModal.style.zIndex = '999999';
+            document.body.style.overflow = 'hidden';
+            
+            console.log('[17] Inline styles applied');
+            console.log('✓ [18] FINAL Modal computed styles:', {
+                display: window.getComputedStyle(reportModal).display,
+                visibility: window.getComputedStyle(reportModal).visibility,
+                opacity: window.getComputedStyle(reportModal).opacity,
+                zIndex: window.getComputedStyle(reportModal).zIndex,
+                position: window.getComputedStyle(reportModal).position,
+                backgroundColor: window.getComputedStyle(reportModal).backgroundColor
+            });
+            
+            attachReportEventListeners();
+            console.log('[19] Report event listeners attached');
+            lucide.createIcons();
+            console.log('[20] Lucide icons created');
+            showToast('✓ Laporan ditampilkan!');
+            console.log('✅ [21] COMPLETE: Report display finished successfully');
+        }
+
+        window.viewInspectionReport = (inspectionId) => {
+            console.log('👀 Viewing inspection report:', inspectionId);
+            const inspection = allInspections.find(i => i.__backendId === inspectionId);
+            if (!inspection) {
+                console.error('❌ Inspection not found:', inspectionId);
+                showToast('Laporan tidak ditemukan', 'error');
+                return;
+            }
+            
+            console.log('✓ Inspection found, generating report...');
+            console.log('Inspection data:', inspection);
+            
+            generateAndShowReport(inspection);
+        };
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                console.log('🚀 Application initialized');
+                lucide.createIcons();
+                initInspectionSystem();
+            });
+        } else {
+            console.log('🚀 Application initialized (already loaded)');
+            lucide.createIcons();
+            initInspectionSystem();
+        }
+    </script>
+    </div>
+   </div>
+  </div>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9e8742e5c5809c45',t:'MTc3NTU0NjMzOC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
