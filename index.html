@@ -6,8 +6,6 @@
   <title>Vehicle Inspection System</title>
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
-  <script src="/_sdk/data_sdk.js"></script>
-  <script src="/_sdk/element_sdk.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -660,10 +658,7 @@ const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
         };
 
         (async () => {
-    const initResult = await window.dataSdk.init(dataHandler);
-    if (!initResult.isOk) {
-        showToast('Error initializing data system', 'error');
-    }
+    // const initResult = await window.dataSdk.init(dataHandler);
 
     // 🔥 TAMBAHKAN INI DI SINI
     loadDataFromSupabase();
@@ -687,12 +682,20 @@ const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
        
 async function loadDataFromSupabase() {
     const { data: users } = await supabase.from('users').select('*');
+    const { data: categories } = await supabase.from('categories').select('*');
+    const { data: items } = await supabase.from('items').select('*');
+    const { data: inspections } = await supabase.from('inspections').select('*');
 
-    allUsers = users || [];
+    // mapping ke struktur lama kamu
+    const combinedData = [
+        ...(users || []).map(d => ({ ...d, type: 'sheet_users' })),
+        ...(categories || []).map(d => ({ ...d, type: 'sheet_categories' })),
+        ...(items || []).map(d => ({ ...d, type: 'sheet_items' })),
+        ...(inspections || []).map(d => ({ ...d, type: 'sheet_inspections' }))
+    ];
 
-    adminExists = allUsers.some(u => u.role === 'admin');
-
-    updateQuickLoginUI();
+    // 🔥 ini yang bikin UI kamu tetap jalan
+    dataHandler.onDataChanged(combinedData);
 }
        
         function setButtonLoading(button, isLoading, originalText = null) {
