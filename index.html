@@ -656,23 +656,24 @@ console.log("✅ Supabase client:", supabaseClient);
             }
         };
 
-		 window.dataSdk = {
+		window.dataSdk = {
   async create(data) {
     const table = getTable(data.type);
 
-    const { data: result, error } = await supabase
+    const { data: result, error } = await supabaseClient
       .from(table)
-      .insert([data]);
+      .insert([data])
+      .select();
 
     return error
       ? { isOk: false, error }
-      : { isOk: true, data: result };
+      : { isOk: true, data: result[0] };
   },
 
   async update(data) {
     const table = getTable(data.type);
 
-    const { error } = await supabase
+    const { error } = await supabaseClient
       .from(table)
       .update(data)
       .eq('id', data.id);
@@ -685,7 +686,7 @@ console.log("✅ Supabase client:", supabaseClient);
   async delete(data) {
     const table = getTable(data.type);
 
-    const { error } = await supabase
+    const { error } = await supabaseClient
       .from(table)
       .delete()
       .eq('id', data.id);
@@ -695,7 +696,6 @@ console.log("✅ Supabase client:", supabaseClient);
       : { isOk: true };
   }
 };
-
 function getTable(type) {
   if (type === 'user') return 'users';
   if (type === 'inspection') return 'inspections';
