@@ -596,6 +596,14 @@
       </div>
      </div>
      <script>
+
+		 const SUPABASE_URL = "https://hbsxxfdxahpqaapaogrn.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...";
+
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+console.log("✅ Supabase client:", supabaseClient);
+		 
         // Separate data stores for each sheet
         let sheetUsers = [];
         let sheetCategories = [];
