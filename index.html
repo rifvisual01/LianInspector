@@ -889,33 +889,50 @@ showToast(`Selamat datang, ${user.username}!`);
         }
 
 
-		 function renderQuickLogin() {
+		function renderQuickLogin() {
   const list = document.getElementById('quickLoginList');
   const divider = document.getElementById('quickLoginDivider');
 
-  if (!list || usersList.length === 0) {
+  if (!list || !divider) return;
+
+  list.innerHTML = '';
+
+  if (!usersList.length) {
     divider.classList.add('hidden');
     return;
   }
 
   divider.classList.remove('hidden');
-  list.innerHTML = '';
 
   usersList.forEach(user => {
-    const item = document.createElement('div');
-    item.className = 'p-2 border rounded cursor-pointer hover:bg-gray-100 text-sm';
+    const card = document.createElement('div');
 
-    item.innerHTML = `
-      <strong>${user.username}</strong>
-      <span style="font-size:10px;opacity:0.6;">(${user.role || 'user'})</span>
+    card.className = `
+      flex items-center justify-between
+      p-3 rounded-xl border border-gray-200
+      hover:bg-blue-50 cursor-pointer transition
     `;
 
-    item.onclick = () => {
+    card.innerHTML = `
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+          👤
+        </div>
+        <div>
+          <p class="font-semibold text-gray-800">${user.username}</p>
+          <p class="text-xs text-gray-500">${user.role || 'user'}</p>
+        </div>
+      </div>
+      <div class="text-blue-600 text-sm font-medium">Login</div>
+    `;
+
+    // 🔥 FIX KLIK DI SINI
+    card.onclick = () => {
       document.getElementById('loginUsername').value = user.username;
       document.getElementById('loginPassword').focus();
     };
 
-    list.appendChild(item);
+    list.appendChild(card);
   });
 }
 		 
