@@ -815,16 +815,15 @@ function getTable(type) {
 
             setButtonLoading(button, true);
 
-            const newAdmin = {
-                type: 'sheet_users',
-                id: 'user_' + Date.now(),
-                username: username,
-                password: password,
-                name: 'Admin User',
-                email: '',
-                role: 'admin',
-                createdAt: new Date().toISOString()
-            };
+           const newAdmin = {
+  type: 'sheet_users',
+  id: 'user_' + Date.now(),
+  username: username,
+  password: password,
+  name: 'Admin User',
+  email: '',
+  role: 'admin'
+};
 
             console.log('📝 Creating admin with data:', newAdmin);
             const result = await window.dataSdk.create(newAdmin);
