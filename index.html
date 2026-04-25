@@ -604,13 +604,14 @@ const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 console.log("✅ Supabase client:", supabaseClient);
 		 
-        // Separate data stores for each sheet
+        // variabel global
         let sheetUsers = [];
         let sheetCategories = [];
         let sheetItems = [];
         let sheetInspections = [];
         let sheetInspectionDetails = [];
         let sheetPhotos = [];
+		 let usersList = [];
         
         // Alias for compatibility
         let allUsers = [];
@@ -717,6 +718,9 @@ function getTable(type) {
   const { data: items } = await supabaseClient.from('items').select('*');
   const { data: inspections } = await supabaseClient.from('inspections').select('*');
 
+			  usersList = users || [];
+  renderQuickLogin();
+			 
   sheetCategories = categories || [];
   sheetItems = items || [];
   sheetInspections = inspections || [];
@@ -885,6 +889,36 @@ showToast(`Selamat datang, ${user.username}!`);
         }
 
 
+		 function renderQuickLogin() {
+  const list = document.getElementById('quickLoginList');
+  const divider = document.getElementById('quickLoginDivider');
+
+  if (!list || usersList.length === 0) {
+    divider.classList.add('hidden');
+    return;
+  }
+
+  divider.classList.remove('hidden');
+  list.innerHTML = '';
+
+  usersList.forEach(user => {
+    const item = document.createElement('div');
+    item.className = 'p-2 border rounded cursor-pointer hover:bg-gray-100 text-sm';
+
+    item.innerHTML = `
+      <strong>${user.username}</strong>
+      <span style="font-size:10px;opacity:0.6;">(${user.role || 'user'})</span>
+    `;
+
+    item.onclick = () => {
+      document.getElementById('loginUsername').value = user.username;
+      document.getElementById('loginPassword').focus();
+    };
+
+    list.appendChild(item);
+  });
+}
+		 
         document.getElementById('menuBtn').addEventListener('click', openSidebar);
         document.getElementById('sidebarOverlay').addEventListener('click', closeSidebar);
 
