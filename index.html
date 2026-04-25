@@ -717,7 +717,6 @@ function getTable(type) {
   const { data: items } = await supabaseClient.from('items').select('*');
   const { data: inspections } = await supabaseClient.from('inspections').select('*');
 
-  sheetUsers = users || [];
   sheetCategories = categories || [];
   sheetItems = items || [];
   sheetInspections = inspections || [];
@@ -808,11 +807,6 @@ function getTable(type) {
                 return;
             }
 
-            if (sheetUsers.find(u => u.username === username)) {
-                showToast('Username sudah terdaftar', 'error');
-                return;
-            }
-
             setButtonLoading(button, true);
 
            const newAdmin = {
@@ -848,22 +842,32 @@ function getTable(type) {
                 return;
             }
 
-            setButtonLoading(button, true);
+           setButtonLoading(button, true);
 
-            const user = sheetUsers.find(u => u.username === username && u.password === password);
-            setButtonLoading(button, false);
-            
-            if (user) {
-                currentUser = user;
-                showLoginScreen(false);
-                renderNavigation();
-                updateDashboard();
-                switchView('dashboardView');
-                showToast(`✓ Selamat datang, ${user.name || user.username}!`);
-            } else {
-                showToast('❌ Username atau password salah', 'error');
-            }
+const { data: user, error } = await supabaseClient
+  .from('users')
+  .select('*')
+  .eq('username', username)
+  .eq('password', password)
+  .single();
+
+setButtonLoading(button, false);
+
+if (error || !user) {
+  showToast('Username atau password salah', 'error');
+  return;
+}
+
+currentUser = user;
+
+showLoginScreen(false);
+renderNavigation();
+updateDashboard();
+switchView('dashboardView');
+
+showToast(`Selamat datang, ${user.username}!`);
         });
+		 
 
         document.getElementById('logoutBtn')?.addEventListener('click', () => {
             currentUser = null;
@@ -880,164 +884,6 @@ function getTable(type) {
             document.getElementById('mainScreen').classList.toggle('hidden', show);
         }
 
-        function updateQuickLoginUI() {
-            const showAdminBtn = document.getElementById('showAdminSetupBtn');
-            
-            if (adminExists) {
-                showAdminBtn.classList.add('hidden');
-            } else {
-                showAdminBtn.classList.remove('hidden');
-            }
-            renderQuickLoginList();
-        }
-
-        let quickLoginSelectedUser = null;
-
-        function renderQuickLoginList() {
-            const quickLoginList = document.getElementById('quickLoginList');
-            const quickLoginDivider = document.getElementById('quickLoginDivider');
-            const registeredUsers = sheetUsers.filter(u => u.username);
-            
-            if (registeredUsers.length === 0) {
-                quickLoginDivider.classList.add('hidden');
-                return;
-            }
-            
-            quickLoginDivider.classList.remove('hidden');
-            quickLoginList.innerHTML = '';
-            
-            registeredUsers.forEach(user => {
-                const button = document.createElement('button');
-                button.type = 'button';
-                button.className = 'w-full flex items-center gap-3 p-3 bg-gradient-to-r from-blue-50 to-cyan-50 hover:from-blue-100 hover:to-cyan-100 border-2 border-blue-200 rounded-xl transition-all text-left';
-                button.innerHTML = `
-                    <div class="flex-1">
-                        <p class="font-semibold text-gray-900 text-sm">${user.name || user.username}</p>
-                        <p class="text-xs text-gray-600">@${user.username}</p>
-                    </div>
-                    <span class="text-xs font-bold px-2 py-1 rounded-lg ${user.role === 'admin' ? 'bg-purple-200 text-purple-800' : 'bg-blue-200 text-blue-800'}">${user.role.toUpperCase()}</span>
-                `;
-                button.addEventListener('click', () => {
-                    quickLoginSelectedUser = user;
-                    showQuickLoginPasswordModal(user);
-                });
-                quickLoginList.appendChild(button);
-            });
-        }
-
-        function showQuickLoginPasswordModal(user) {
-            const modal = document.createElement('div');
-            modal.id = 'quickLoginModal';
-            modal.className = 'fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 backdrop-blur-sm';
-            modal.innerHTML = `
-                <div class="card-modern rounded-3xl shadow-2xl p-8 w-full max-w-sm border border-white/20 animate-fade-in">
-                    <div class="text-center mb-6">
-                        <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-600 to-cyan-600 mb-4 shadow-lg">
-                            <span class="text-3xl">${user.role === 'admin' ? '👑' : '👤'}</span>
-                        </div>
-                        <h2 class="text-2xl font-black text-gray-900">Masuk Sebagai</h2>
-                        <p class="text-lg font-bold text-blue-600 mt-2">${user.name || user.username}</p>
-                        <p class="text-sm text-gray-600 mt-1">@${user.username}</p>
-                    </div>
-                    
-                    <div class="space-y-4">
-                        <div class="relative">
-                            <label class="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide">Password</label>
-                            <div class="relative">
-                                <i data-lucide="lock" style="width: 18px; height: 18px; color: #3b82f6;" class="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-                                <input id="quickLoginPassword" type="password" placeholder="Masukkan password" class="w-full pl-12 pr-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all font-medium text-sm" autofocus>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="flex gap-3 mt-6">
-                        <button id="quickLoginCancelBtn" class="flex-1 px-4 py-3 border-2 border-gray-300 rounded-xl text-gray-700 hover:bg-gray-100 transition-all font-bold text-sm uppercase tracking-wide">Batal</button>
-                        <button id="quickLoginSubmitBtn" class="flex-1 px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl transition-all font-bold text-sm uppercase tracking-wide shadow-lg transform hover:scale-105 active:scale-95">Masuk</button>
-                    </div>
-                </div>
-            `;
-            
-            document.body.appendChild(modal);
-            lucide.createIcons();
-            
-            const passwordInput = document.getElementById('quickLoginPassword');
-            const submitBtn = document.getElementById('quickLoginSubmitBtn');
-            const cancelBtn = document.getElementById('quickLoginCancelBtn');
-            
-            passwordInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    performQuickLogin(user, passwordInput.value);
-                }
-            });
-            
-            submitBtn.addEventListener('click', () => {
-                performQuickLogin(user, passwordInput.value);
-            });
-            
-            cancelBtn.addEventListener('click', () => {
-                modal.remove();
-                quickLoginSelectedUser = null;
-            });
-            
-            // Close on background click
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) {
-                    modal.remove();
-                    quickLoginSelectedUser = null;
-                }
-            });
-        }
-
-        function performQuickLogin(user, password) {
-            if (!password) {
-                showToast('Silakan masukkan password', 'error');
-                document.getElementById('quickLoginPassword').focus();
-                return;
-            }
-            
-            if (user.password !== password) {
-                const modal = document.getElementById('quickLoginModal');
-                const passwordInput = document.getElementById('quickLoginPassword');
-                const formElement = passwordInput.closest('.space-y-4');
-                
-                // Create error message if not exists
-                let errorMsg = document.getElementById('quickLoginErrorMsg');
-                if (!errorMsg) {
-                    errorMsg = document.createElement('div');
-                    errorMsg.id = 'quickLoginErrorMsg';
-                    errorMsg.className = 'bg-red-100 border-2 border-red-500 rounded-lg p-3 flex items-center gap-2 text-sm font-bold text-red-800';
-                    formElement.parentNode.insertBefore(errorMsg, formElement);
-                }
-                
-                errorMsg.innerHTML = '<i data-lucide="alert-circle" style="width: 18px; height: 18px;"></i> ❌ Password salah! Silakan coba lagi.';
-                errorMsg.classList.remove('hidden');
-                
-                // Highlight password input
-                passwordInput.value = '';
-                passwordInput.classList.add('border-red-500', 'ring-2', 'ring-red-300');
-                passwordInput.focus();
-                
-                lucide.createIcons();
-                
-                // Clear error after 3 seconds
-                setTimeout(() => {
-                    errorMsg.classList.add('hidden');
-                    passwordInput.classList.remove('border-red-500', 'ring-2', 'ring-red-300');
-                }, 3000);
-                return;
-            }
-            
-            currentUser = user;
-            const modal = document.getElementById('quickLoginModal');
-            if (modal) modal.remove();
-            
-            showLoginScreen(false);
-            renderNavigation();
-            updateDashboard();
-            switchView('dashboardView');
-            showToast(`Selamat datang, ${user.name || user.username}!`);
-            quickLoginSelectedUser = null;
-        }
 
         document.getElementById('menuBtn').addEventListener('click', openSidebar);
         document.getElementById('sidebarOverlay').addEventListener('click', closeSidebar);
