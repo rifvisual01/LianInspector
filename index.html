@@ -96,7 +96,7 @@
         <button id="showAdminSetupBtn" class="flex-1 bg-gradient-to-r from-blue-700 to-blue-800 hover:from-blue-800 hover:to-blue-900 text-white font-bold py-3 rounded-xl transition-all transform hover:scale-105 shadow-lg text-sm">Setup Admin</button> <button id="showLoginBtn" class="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold py-3 rounded-xl transition-all transform hover:scale-105 shadow-lg text-sm">Login</button>
        </div>
        <div id="quickLoginDivider" class="hidden text-center py-2">
-        <p class="text-gray-600 text-xs font-semibold">ATAU LOGIN DENGAN AKUN LAIN</p>
+        <p class="text-gray-600 text-xs font-semibold">ATAU LOGIN DENGAN AKUN TERSIMPAN</p>
        </div>
        <div id="quickLoginList" class="space-y-2"></div>
       </div><!-- Admin Setup Form -->
@@ -907,30 +907,35 @@ showToast(`Selamat datang, ${user.username}!`);
   usersList.forEach(user => {
     const card = document.createElement('div');
 
-    card.className = `
-      flex items-center justify-between
-      p-3 rounded-xl border border-gray-200
-      hover:bg-blue-50 cursor-pointer transition
-    `;
+// 🔥 TAMBAH DI SINI
+card.className = `
+  relative z-10
+  flex items-center justify-between
+  p-3 rounded-xl border border-gray-200
+  hover:bg-blue-50 cursor-pointer transition
+`;
 
-    card.innerHTML = `
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
-          👤
-        </div>
-        <div>
-          <p class="font-semibold text-gray-800">${user.username}</p>
-          <p class="text-xs text-gray-500">${user.role || 'user'}</p>
-        </div>
-      </div>
-      <div class="text-blue-600 text-sm font-medium">Login</div>
-    `;
+card.innerHTML = `
+  <div class="flex items-center gap-3">
+    <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center font-bold text-blue-600">
+      ${user.username.charAt(0).toUpperCase()}
+    </div>
+    <div>
+      <p class="font-semibold text-gray-800">${user.username}</p>
+      <p class="text-xs text-gray-500">${user.role || 'user'}</p>
+    </div>
+  </div>
+
+  <div class="text-blue-600 text-sm font-medium">Login</div>
+`;
 
     // 🔥 FIX KLIK DI SINI
-    card.onclick = () => {
-      document.getElementById('loginUsername').value = user.username;
-      document.getElementById('loginPassword').focus();
-    };
+    card.addEventListener('click', (e) => {
+  console.log('CLICK WORKING'); // 🔥 TEST
+
+  document.getElementById('loginUsername').value = user.username;
+  document.getElementById('loginPassword').focus();
+});
 
     list.appendChild(card);
   });
