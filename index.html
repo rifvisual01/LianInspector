@@ -1999,7 +1999,8 @@ list.appendChild(card);
     const staff = sheetUsers || [];
 
     // 🔥 DEBUG (opsional, tapi bagus untuk cek)
-    console.log('RENDER STAFF:', staff);
+    console.log('STAFF ITEM:', s);
+console.log('STAFF ID:', staffId);
 
     if (staff.length === 0) {
         list.innerHTML = `
@@ -2021,7 +2022,7 @@ list.appendChild(card);
             : 'from-blue-600 to-blue-700';
 
         // 🔥 FIX 2: pakai id asli Supabase (bukan __backendId)
-        const staffId = s.id || s.__backendId || s.username;
+     const staffId = s.id;
 
         const card = document.createElement('div');
         card.className = 'card-modern rounded-xl shadow-md hover:shadow-lg transition-all border border-gray-200 hover:border-blue-300 overflow-hidden group';
