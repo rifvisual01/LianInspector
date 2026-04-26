@@ -1980,13 +1980,13 @@ list.appendChild(card);
 
             <div class="px-3 pb-3 flex gap-2 border-t border-gray-100 pt-2">
                 <button class="edit-staff-btn flex-1 flex items-center justify-center gap-1 px-2 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg transition-all font-semibold text-xs"
-                        data-staff-id="${s.__backendId}" title="Edit">
+                        data-staff-id="${staffId}" title="Edit">
                     <i data-lucide="pencil" style="width: 14px; height: 14px;"></i>
                     <span>Edit</span>
                 </button>
 
                 <button class="delete-staff-btn flex-1 flex items-center justify-center gap-1 px-2 py-2 bg-red-50 hover:bg-red-100 text-red-700 rounded-lg transition-all font-semibold text-xs"
-                        data-staff-id="${s.__backendId}" title="Hapus">
+                       data-staff-id="${staffId}" title="Hapus">
                     <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>
                     <span>Hapus</span>
                 </button>
@@ -2015,13 +2015,16 @@ list.querySelectorAll('.delete-staff-btn').forEach(btn => {
        window.editStaff = async (id) => {
   console.log('EDIT FUNCTION JALAN:', id);
 
-  const user = sheetUsers.find(u => u.__backendId == id);
+  const user = sheetUsers.find(u =>
+    u.id == id || u.__backendId == id || u.username == id
+  );
+
   if (!user) {
-    console.log('USER TIDAK KETEMU');
+    console.log('❌ USER TIDAK KETEMU');
     return;
   }
 
-  currentEditingStaffId = id;
+  currentEditingStaffId = user.id || user.__backendId;
   isAdminEditMode = false;
 
   document.getElementById('staffUsername').value = user.username || '';
@@ -2033,37 +2036,44 @@ list.querySelectorAll('.delete-staff-btn').forEach(btn => {
 
   const modal = document.getElementById('staffModal');
 
+  // 🔥 HARD FIX (ANTI CSS TABRAKAN)
   modal.classList.remove('hidden');
+  modal.style.display = 'flex';
+  modal.style.zIndex = '999999';
 
-  console.log('MODAL DITAMPILKAN');
+  console.log('✅ MODAL DITAMPILKAN');
 };
 		 
         window.deleteStaff = async (id) => {
-    console.log('DELETE FUNCTION JALAN:', id);
+  console.log('DELETE FUNCTION JALAN:', id);
 
-    const user = sheetUsers.find(u => u.__backendId == id);
-    if (!user) {
-        console.log('USER TIDAK KETEMU');
-        return;
-    }
+  const user = sheetUsers.find(u =>
+    u.id == id || u.__backendId == id || u.username == id
+  );
 
-    const confirmDelete = confirm(`Hapus "${user.username}" ?`);
-    if (!confirmDelete) return;
+  if (!user) {
+    console.log('USER TIDAK KETEMU');
+    return;
+  }
 
-    const { error } = await supabaseClient
-        .from('users')
-        .delete()
-        .eq('id', id);
+  const realId = user.id;
 
-    if (error) {
-        console.error(error);
-        alert('Gagal hapus');
-        return;
-    }
+  const confirmDelete = confirm(`Hapus "${user.username}" ?`);
+  if (!confirmDelete) return;
 
-    // reload data + render ulang
-    await loadInitialData();
-    renderStaff();
+  const { error } = await supabaseClient
+    .from('users')
+    .delete()
+    .eq('id', realId);
+
+  if (error) {
+    console.error(error);
+    alert('Gagal hapus');
+    return;
+  }
+
+  await loadInitialData();
+  renderStaff();
 };
 
 
