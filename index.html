@@ -929,40 +929,18 @@ card.innerHTML = `
   <div class="text-blue-600 text-sm font-medium">Login</div>
 `;
 
-   card.addEventListener('click', () => {
-  console.log('CLICK WORKING');
+       // 🔥 FIX KLIK DI SINI
+    card.addEventListener('click', (e) => {
+  console.log('CLICK WORKING'); // 🔥 TEST
 
-  const setupSection = document.getElementById('adminSetupForm');
-  const loginSection = document.getElementById('loginForm');
-
-  if (setupSection && loginSection) {
-    setupSection.classList.add('hidden');
-    loginSection.classList.remove('hidden');
-  }
-
-  setTimeout(() => {
-    const usernameInput = document.getElementById('loginUsername');
-    const passwordInput = document.getElementById('loginPassword');
-
-    if (!usernameInput || !passwordInput) {
-      console.log('❌ INPUT TIDAK DITEMUKAN');
-      return;
-    }
-
-    usernameInput.value = user.username;
-    passwordInput.focus();
-
-    usernameInput.classList.add('ring-2', 'ring-blue-400');
-
-    setTimeout(() => {
-      usernameInput.classList.remove('ring-2', 'ring-blue-400');
-    }, 800);
-
-  }, 100);
+  document.getElementById('loginUsername').value = user.username;
+  document.getElementById('loginPassword').focus();
 });
 
-list.appendChild(card);
-	  });
+    list.appendChild(card);
+  });
+}
+
 
 	   document.getElementById('menuBtn').addEventListener('click', openSidebar);
         document.getElementById('sidebarOverlay').addEventListener('click', closeSidebar);
