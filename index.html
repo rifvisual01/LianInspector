@@ -2160,28 +2160,6 @@ window.editStaff = (id) => {
   console.log('✅ MODAL DIBUKA');
 };
 
-
-// ================= DELETE STAFF =================
-window.deleteStaff = (id) => {
-  const user = sheetUsers.find(u =>
-    u.id == id || u.__backendId == id || u.username == id
-  );
-
-  if (!user) {
-    showToast('User tidak ditemukan', 'error');
-    return;
-  }
-
-  deleteTargetId = user.id;
-
-  document.getElementById('confirmDeleteText').textContent =
-    `Hapus "${user.username}" ?`;
-
-  const modal = document.getElementById('confirmDeleteModal');
-  modal.classList.remove('hidden');
-};
-
-
 		 
 // tombol batal
 document.getElementById('cancelDeleteBtn').onclick = () => {
@@ -2213,6 +2191,28 @@ document.getElementById('confirmDeleteBtn').onclick = async () => {
   await loadInitialData();
   renderStaff();
 };
+
+// ================= DELETE STAFF =================
+window.deleteStaff = (id) => {
+  const user = sheetUsers.find(u =>
+    u.id == id || u.__backendId == id || u.username == id
+  );
+
+  if (!user) {
+    showToast('User tidak ditemukan', 'error');
+    return;
+  }
+
+  deleteTargetId = user.id;
+
+  document.getElementById('confirmDeleteText').textContent =
+    `Hapus "${user.username}" ?`;
+
+  const modal = document.getElementById('confirmDeleteModal');
+  modal.classList.remove('hidden');
+};
+
+
 
 		 
 		function showToast(message, type = 'success') {
