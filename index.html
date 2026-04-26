@@ -1985,16 +1985,12 @@ list.appendChild(card);
 
     // 🔥 FIX 3: re-bind event setelah render
     list.querySelectorAll('.edit-staff-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            editStaff(btn.dataset.staffId);
-        });
-    });
+    btn.onclick = () => editStaff(btn.dataset.staffId);
+});
 
-    list.querySelectorAll('.delete-staff-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            deleteStaff(btn.dataset.staffId);
-        });
-    });
+list.querySelectorAll('.delete-staff-btn').forEach(btn => {
+    btn.onclick = () => deleteStaff(btn.dataset.staffId);
+});
 
     lucide.createIcons();
 }
