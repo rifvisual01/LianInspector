@@ -2003,75 +2003,41 @@ list.querySelectorAll('.delete-staff-btn').forEach(btn => {
 });
     lucide.createIcons();
 }
-        window.editStaff = (id) => {
-            const user = allUsers.find(u => u.__backendId === id);
-            if (user) {
-                currentEditingStaffId = id;
-                isAdminEditMode = false;
-                
-                document.getElementById('staffUsername').value = user.username || '';
-                document.getElementById('staffPassword').value = user.password || '';
-                document.getElementById('staffRole').value = user.role || 'inspector';
-                
-                document.getElementById('staffRoleContainer').classList.remove('hidden');
-                document.getElementById('staffUsername').disabled = false;
-                document.getElementById('staffPassword').disabled = false;
-                document.getElementById('staffRole').disabled = false;
-                
-                document.getElementById('staffModalTitle').textContent = '✏️ Edit Staff';
-                document.getElementById('staffModal').classList.remove('hidden');
-            }
-        };
+        window.editStaff = async (id) => {
+    console.log('EDIT FUNCTION JALAN:', id);
 
-        window.deleteStaff = async (id) => {
-            const user = sheetUsers.find(u => u.__backendId === id);
-            if (user) {
-                if (confirm(`Hapus staff "${user.name || user.username}"?`)) {
-                    const result = await window.dataSdk.delete(user);
-                    if (result.isOk) {
-                        showToast('✓ Staff berhasil dihapus!');
-                    } else {
-                        showToast('❌ Gagal menghapus staff', 'error');
-                    }
-                }
-            }
-        };
-
-		 async function editStaff(id) {
     const user = sheetUsers.find(u => u.__backendId == id);
-    if (!user) return;
-
-    const newUsername = prompt('Ubah username:', user.username);
-    if (!newUsername) return;
-
-    const newPassword = prompt('Ubah password (kosongkan jika tidak diubah):', '');
-
-    const updateData = {
-        username: newUsername
-    };
-
-    if (newPassword) {
-        updateData.password = newPassword;
-    }
-
-    const { error } = await supabaseClient
-        .from('users')
-        .update(updateData)
-        .eq('id', id);
-
-    if (error) {
-        console.error(error);
-        alert('Gagal update');
+    if (!user) {
+        console.log('USER TIDAK KETEMU');
         return;
     }
 
-    await loadInitialData();
-    renderStaff();
-}
+    // isi form dari data user
+    currentEditingStaffId = id;
+    isAdminEditMode = false;
 
-		async function deleteStaff(id) {
+    document.getElementById('staffUsername').value = user.username || '';
+    document.getElementById('staffPassword').value = user.password || '';
+    document.getElementById('staffRole').value = user.role || 'inspector';
+
+    document.getElementById('staffRoleContainer').classList.remove('hidden');
+
+    document.getElementById('staffUsername').disabled = false;
+    document.getElementById('staffPassword').disabled = false;
+    document.getElementById('staffRole').disabled = false;
+
+    document.getElementById('staffModalTitle').textContent = '✏️ Edit Staff';
+    document.getElementById('staffModal').classList.remove('hidden');
+};
+		 
+        window.deleteStaff = async (id) => {
+    console.log('DELETE FUNCTION JALAN:', id);
+
     const user = sheetUsers.find(u => u.__backendId == id);
-    if (!user) return;
+    if (!user) {
+        console.log('USER TIDAK KETEMU');
+        return;
+    }
 
     const confirmDelete = confirm(`Hapus "${user.username}" ?`);
     if (!confirmDelete) return;
@@ -2087,9 +2053,11 @@ list.querySelectorAll('.delete-staff-btn').forEach(btn => {
         return;
     }
 
+    // reload data + render ulang
     await loadInitialData();
     renderStaff();
-}
+};
+
 
 		 
         // ============ INSPECTION SYSTEM ============
