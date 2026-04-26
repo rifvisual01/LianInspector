@@ -929,16 +929,36 @@ card.innerHTML = `
   <div class="text-blue-600 text-sm font-medium">Login</div>
 `;
 
-       // 🔥 FIX KLIK DI SINI
-    card.addEventListener('click', (e) => {
-  console.log('CLICK WORKING'); // 🔥 TEST
+// 🔥 FIX KLIK (FINAL STABLE)
+card.addEventListener('click', () => {
+  console.log('CLICK WORKING');
 
-  document.getElementById('loginUsername').value = user.username;
-  document.getElementById('loginPassword').focus();
+  // 👉 paksa buka login UI (klik tombol Login)
+  const loginBtn = Array.from(document.querySelectorAll('button'))
+    .find(btn => btn.innerText.includes('Login'));
+
+  if (loginBtn) loginBtn.click();
+
+  // 👉 tunggu render UI
+  setTimeout(() => {
+    const usernameInput = document.getElementById('loginUsername');
+    const passwordInput = document.getElementById('loginPassword');
+
+    if (!usernameInput) {
+      console.log('❌ USERNAME INPUT TIDAK KETEMU');
+      return;
+    }
+
+    console.log('✅ INPUT KETEMU');
+
+    usernameInput.value = user.username;
+    passwordInput?.focus();
+
+  }, 300);
 });
 
-    list.appendChild(card);
-  });
+list.appendChild(card);
+});
 }
 
 
