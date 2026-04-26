@@ -2012,10 +2012,8 @@ list.appendChild(card);
 
     list.innerHTML = '';
 
-    // 🔥 FIX 1: gunakan semua user dari Supabase (tanpa filter aneh)
     const staff = sheetUsers || [];
 
-    // 🔥 DEBUG (opsional, tapi bagus untuk cek)
     console.log('RENDER STAFF:', staff);
 
     if (staff.length === 0) {
@@ -2037,8 +2035,8 @@ list.appendChild(card);
             ? 'from-purple-600 to-purple-700'
             : 'from-blue-600 to-blue-700';
 
-        // 🔥 FIX 2: pakai id asli Supabase (bukan __backendId)
-        const staffId = s.id || s.__backendId || s.username;
+        // 🔥 FIX UTAMA: pastikan ID valid
+        const staffId = s.id;
 
         const card = document.createElement('div');
         card.className = 'card-modern rounded-xl shadow-md hover:shadow-lg transition-all border border-gray-200 hover:border-blue-300 overflow-hidden group';
@@ -2069,39 +2067,43 @@ list.appendChild(card);
             </div>
 
             <div class="px-3 pb-3 flex gap-2 border-t border-gray-100 pt-2">
-    <button class="edit-staff-btn flex-1 flex items-center justify-center gap-1 px-2 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg transition-all font-semibold text-xs"
-            data-edit-id="${staffId}" title="Edit">
-        <i data-lucide="pencil" style="width: 14px; height: 14px;"></i>
-        <span>Edit</span>
-    </button>
+                <button class="edit-staff-btn flex-1 flex items-center justify-center gap-1 px-2 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg transition-all font-semibold text-xs"
+                        data-edit-id="${staffId}" title="Edit">
+                    <i data-lucide="pencil" style="width: 14px; height: 14px;"></i>
+                    <span>Edit</span>
+                </button>
 
-    <button class="delete-staff-btn flex-1 flex items-center justify-center gap-1 px-2 py-2 bg-red-50 hover:bg-red-100 text-red-700 rounded-lg transition-all font-semibold text-xs"
-           data-delete-id="${staffId}" title="Hapus">
-        <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>
-        <span>Hapus</span>
-    </button>
-</div>
+                <button class="delete-staff-btn flex-1 flex items-center justify-center gap-1 px-2 py-2 bg-red-50 hover:bg-red-100 text-red-700 rounded-lg transition-all font-semibold text-xs"
+                       data-delete-id="${staffId}" title="Hapus">
+                    <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>
+                    <span>Hapus</span>
+                </button>
+            </div>
         `;
 
         list.appendChild(card);
     });
 
-    // 🔥 FIX 3: re-bind event setelah render
-   list.querySelectorAll('.edit-staff-btn').forEach(btn => {
-    btn.onclick = () => {
-        console.log('EDIT CLICK ID:', btn.dataset.staffId); // 👈 CEK DI SINI
-        editStaff(btn.dataset.staffId);
-    };
-});
+    // 🔥 FIX PENTING: ambil dataset yang BENAR
+    list.querySelectorAll('.edit-staff-btn').forEach(btn => {
+        btn.onclick = () => {
+            const id = btn.dataset.editId; // ✅ FIX
+            console.log('EDIT CLICK ID:', id);
+            editStaff(id);
+        };
+    });
 
-list.querySelectorAll('.delete-staff-btn').forEach(btn => {
-    btn.onclick = () => {
-        console.log('DELETE CLICK ID:', btn.dataset.staffId); // 👈 CEK DI SINI
-        deleteStaff(btn.dataset.staffId);
-    };
-});
+    list.querySelectorAll('.delete-staff-btn').forEach(btn => {
+        btn.onclick = () => {
+            const id = btn.dataset.deleteId; // ✅ FIX
+            console.log('DELETE CLICK ID:', id);
+            deleteStaff(id);
+        };
+    });
+
     lucide.createIcons();
 }
+		 
        // ================= EDIT STAFF =================
 window.editStaff = (id) => {
   console.log('🔥 EDIT TERPANGGIL:', id);
@@ -2138,7 +2140,7 @@ window.editStaff = (id) => {
 
 // ================= DELETE STAFF =================
 window.deleteStaff = async (id) => {
-  console.log('DELETE:', id);
+  console.log('DELETE FUNCTION JALAN:', id);
 
   const user = sheetUsers.find(u =>
     u.id == id || u.__backendId == id || u.username == id
@@ -2149,14 +2151,16 @@ window.deleteStaff = async (id) => {
     return;
   }
 
-  // ❌ hapus confirm browser
+  const realId = user.id;
+
+  // ❌ HAPUS confirm browser
   // const confirmDelete = confirm(...)
   // if (!confirmDelete) return;
 
   const { error } = await supabaseClient
     .from('users')
     .delete()
-    .eq('id', user.id);
+    .eq('id', realId);
 
   if (error) {
     console.error(error);
@@ -2164,19 +2168,19 @@ window.deleteStaff = async (id) => {
     return;
   }
 
-  showToast(`✓ ${user.username} dihapus`);
+  // ✅ TOAST SUKSES
+  showToast(`✓ ${user.username} berhasil dihapus`);
 
   await loadInitialData();
   renderStaff();
 };
 
 
-		 function showToast(message, type = 'success') {
+		function showToast(message, type = 'success') {
   const toast = document.getElementById('toast');
 
   toast.textContent = message;
 
-  // warna beda
   if (type === 'error') {
     toast.style.background = '#dc2626';
   } else {
@@ -2189,7 +2193,6 @@ window.deleteStaff = async (id) => {
     toast.style.display = 'none';
   }, 2000);
 }
-
 		 
         // ============ INSPECTION SYSTEM ============
         let inspectionStep = 0;
