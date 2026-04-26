@@ -2036,13 +2036,16 @@ list.querySelectorAll('.delete-staff-btn').forEach(btn => {
 
   const modal = document.getElementById('staffModal');
 
-  // 🔥 HARD FIX (ANTI CSS TABRAKAN)
-  modal.classList.remove('hidden');
-  modal.style.display = 'flex';
-  modal.style.zIndex = '999999';
+modal.classList.remove('hidden');
 
-  console.log('✅ MODAL DITAMPILKAN');
-};
+// 🔥 INI KUNCI YANG KAMU BELUM LAKUKAN
+modal.classList.add('flex');
+
+// 🔥 backup (biar 100% muncul)
+modal.style.display = 'flex';
+modal.style.zIndex = '999999';
+
+console.log('✅ MODAL DITAMPILKAN');
 		 
         window.deleteStaff = async (id) => {
   console.log('DELETE FUNCTION JALAN:', id);
