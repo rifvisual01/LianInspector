@@ -967,6 +967,10 @@ card.innerHTML = `
   }, 100);
 });
 
+	   document.getElementById('menuBtn').addEventListener('click', openSidebar);
+        document.getElementById('sidebarOverlay').addEventListener('click', closeSidebar);
+
+	  
         function renderNavigation() {
             const navMenu = document.getElementById('navMenu');
             const categoryMenuBtn = document.getElementById('categoryMenuBtn');
