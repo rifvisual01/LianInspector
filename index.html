@@ -2015,38 +2015,35 @@ list.querySelectorAll('.delete-staff-btn').forEach(btn => {
        window.editStaff = async (id) => {
   console.log('EDIT FUNCTION JALAN:', id);
 
-  const user = sheetUsers.find(u =>
-    u.id == id || u.__backendId == id || u.username == id
-  );
-
+  const user = sheetUsers.find(u => u.__backendId == id);
   if (!user) {
-    console.log('❌ USER TIDAK KETEMU');
+    console.log('USER TIDAK KETEMU');
     return;
   }
 
-  currentEditingStaffId = user.id || user.__backendId;
-  isAdminEditMode = false;
-
+  // isi form
   document.getElementById('staffUsername').value = user.username || '';
   document.getElementById('staffPassword').value = user.password || '';
   document.getElementById('staffRole').value = user.role || 'inspector';
 
-  document.getElementById('staffRoleContainer').classList.remove('hidden');
-  document.getElementById('staffModalTitle').textContent = '✏️ Edit Staff';
+  document.getElementById('staffModalTitle').textContent = 'Edit Staff';
 
   const modal = document.getElementById('staffModal');
 
-modal.classList.remove('hidden');
+  // 🔥 RESET TOTAL (INI KUNCI)
+  modal.classList.remove('hidden');
 
-// 🔥 INI KUNCI YANG KAMU BELUM LAKUKAN
-modal.classList.add('flex');
+  // hapus semua kemungkinan konflik
+  modal.style.display = '';
+  modal.style.visibility = '';
+  modal.style.opacity = '';
 
-// 🔥 backup (biar 100% muncul)
-modal.style.display = 'flex';
-modal.style.zIndex = '999999';
+  // paksa tampil
+  modal.style.display = 'flex';
+  modal.style.zIndex = '999999';
 
-console.log('✅ MODAL DITAMPILKAN');
-		   };
+  console.log('✅ MODAL DIPAKSA MUNCUL');
+};
 		 
         window.deleteStaff = async (id) => {
   console.log('DELETE FUNCTION JALAN:', id);
