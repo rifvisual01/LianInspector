@@ -2004,7 +2004,7 @@ list.querySelectorAll('.delete-staff-btn').forEach(btn => {
     lucide.createIcons();
 }
         window.editStaff = async (id) => {
-    console.log('EDIT FUNCTION JALAN:', id);
+    console.log('MODAL:', document.getElementById('staffModal'));
 
     const user = sheetUsers.find(u => u.__backendId == id);
     if (!user) {
