@@ -676,6 +676,7 @@ class="hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-5
        </div>
       </div>
      </div>
+		
      <script>
 		 
 		 const SUPABASE_URL = "https://hbsxxfdxahpqaapaogrn.supabase.co";
@@ -2051,18 +2052,18 @@ list.appendChild(card);
             </div>
 
             <div class="px-3 pb-3 flex gap-2 border-t border-gray-100 pt-2">
-                <button class="edit-staff-btn flex-1 flex items-center justify-center gap-1 px-2 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg transition-all font-semibold text-xs"
-                        data-staff-id="${staffId}" title="Edit">
-                    <i data-lucide="pencil" style="width: 14px; height: 14px;"></i>
-                    <span>Edit</span>
-                </button>
+    <button class="edit-staff-btn flex-1 flex items-center justify-center gap-1 px-2 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg transition-all font-semibold text-xs"
+            data-edit-id="${staffId}" title="Edit">
+        <i data-lucide="pencil" style="width: 14px; height: 14px;"></i>
+        <span>Edit</span>
+    </button>
 
-                <button class="delete-staff-btn flex-1 flex items-center justify-center gap-1 px-2 py-2 bg-red-50 hover:bg-red-100 text-red-700 rounded-lg transition-all font-semibold text-xs"
-                       data-staff-id="${staffId}" title="Hapus">
-                    <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>
-                    <span>Hapus</span>
-                </button>
-            </div>
+    <button class="delete-staff-btn flex-1 flex items-center justify-center gap-1 px-2 py-2 bg-red-50 hover:bg-red-100 text-red-700 rounded-lg transition-all font-semibold text-xs"
+           data-delete-id="${staffId}" title="Hapus">
+        <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>
+        <span>Hapus</span>
+    </button>
+</div>
         `;
 
         list.appendChild(card);
@@ -2084,7 +2085,8 @@ list.querySelectorAll('.delete-staff-btn').forEach(btn => {
 });
     lucide.createIcons();
 }
-       window.editStaff = (id) => {
+       // ================= EDIT STAFF =================
+window.editStaff = (id) => {
   console.log('EDIT FUNCTION JALAN:', id);
 
   const user = sheetUsers.find(u =>
@@ -2098,24 +2100,27 @@ list.querySelectorAll('.delete-staff-btn').forEach(btn => {
     return;
   }
 
+  // isi form
   document.getElementById('staffUsername').value = user.username || '';
   document.getElementById('staffPassword').value = user.password || '';
   document.getElementById('staffRole').value = user.role || 'inspector';
 
   document.getElementById('staffModalTitle').textContent = 'Edit Staff';
 
-  const modal = document.getElementById('staffModal');
+  // simpan id yang sedang diedit (PENTING untuk save nanti)
+  currentEditingStaffId = user.id || user.__backendId || user.username;
 
+  // tampilkan modal (clean, tidak overkill)
+  const modal = document.getElementById('staffModal');
   modal.classList.remove('hidden');
-modal.style.display = 'flex';
-modal.style.visibility = 'visible';
-modal.style.opacity = '1';
-modal.style.zIndex = '999999';
+  modal.style.display = 'flex';
 
   console.log('✅ MODAL DIBUKA');
 };
-		 
-        window.deleteStaff = async (id) => {
+
+
+// ================= DELETE STAFF =================
+window.deleteStaff = async (id) => {
   console.log('DELETE FUNCTION JALAN:', id);
 
   const user = sheetUsers.find(u =>
@@ -2123,7 +2128,7 @@ modal.style.zIndex = '999999';
   );
 
   if (!user) {
-    console.log('USER TIDAK KETEMU');
+    console.log('❌ USER TIDAK KETEMU');
     return;
   }
 
@@ -2143,8 +2148,11 @@ modal.style.zIndex = '999999';
     return;
   }
 
+  // refresh data (biar UI sinkron)
   await loadInitialData();
   renderStaff();
+
+  console.log('✅ DELETE BERHASIL');
 };
 
 
@@ -3199,6 +3207,34 @@ initInspectionSystem();
   initInspectionSystem();
 });
 }
+
+		 // ===== FIX CLICK STAFF (STABIL) =====
+document.addEventListener('click', function (e) {
+  const editBtn = e.target.closest('[data-edit-id]');
+  const deleteBtn = e.target.closest('[data-delete-id]');
+  const addBtn = e.target.closest('#addStaffBtn');
+
+  // EDIT
+  if (editBtn) {
+    const id = editBtn.dataset.editId;
+    console.log('EDIT CLICK:', id);
+    editStaff(id);
+  }
+
+  // DELETE
+  if (deleteBtn) {
+    const id = deleteBtn.dataset.deleteId;
+    console.log('DELETE CLICK:', id);
+    deleteStaff(id);
+  }
+
+  // ADD STAFF
+  if (addBtn) {
+    console.log('ADD CLICK');
+    openAddStaffModal();
+  }
+});
+		 
     </script>
     </div>
    </div>
