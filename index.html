@@ -723,8 +723,12 @@ function getTable(type) {
   const { data: inspections } = await supabaseClient.from('inspections').select('*');
 
   // 🔥 WAJIB: isi semua dulu
-  sheetUsers = users || [];
-  usersList = users || [];
+  usersList = (users || []).map(u => ({
+  ...u,
+  __backendId: u.id // 🔥 INI KUNCI NYA
+}));
+
+sheetUsers = usersList;
 
   sheetCategories = categories || [];
   sheetItems = items || [];
