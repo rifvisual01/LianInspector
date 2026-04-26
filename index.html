@@ -2194,9 +2194,13 @@ document.getElementById('confirmDeleteBtn').onclick = async () => {
 
 // ================= DELETE STAFF =================
 window.deleteStaff = (id) => {
+  console.log('🔥 MASUK DELETE STAFF:', id);
+
   const user = sheetUsers.find(u =>
     u.id == id || u.__backendId == id || u.username == id
   );
+
+  console.log('🔥 USER:', user);
 
   if (!user) {
     showToast('User tidak ditemukan', 'error');
@@ -2205,14 +2209,18 @@ window.deleteStaff = (id) => {
 
   deleteTargetId = user.id;
 
-  document.getElementById('confirmDeleteText').textContent =
-    `Hapus "${user.username}" ?`;
+  console.log('🔥 SET TARGET:', deleteTargetId);
 
   const modal = document.getElementById('confirmDeleteModal');
+  console.log('🔥 MODAL:', modal);
+
+  const text = document.getElementById('confirmDeleteText');
+  text.textContent = `Hapus "${user.username}" ?`;
+
   modal.classList.remove('hidden');
+
+  console.log('🔥 MODAL HARUSNYA MUNCUL');
 };
-
-
 
 		 
 		function showToast(message, type = 'success') {
