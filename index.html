@@ -1967,13 +1967,13 @@ list.appendChild(card);
 
             <div class="px-3 pb-3 flex gap-2 border-t border-gray-100 pt-2">
                 <button class="edit-staff-btn flex-1 flex items-center justify-center gap-1 px-2 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg transition-all font-semibold text-xs"
-                        data-staff-id="${staffId}" title="Edit">
+                        data-staff-id="${s.__backendId}" title="Edit">
                     <i data-lucide="pencil" style="width: 14px; height: 14px;"></i>
                     <span>Edit</span>
                 </button>
 
                 <button class="delete-staff-btn flex-1 flex items-center justify-center gap-1 px-2 py-2 bg-red-50 hover:bg-red-100 text-red-700 rounded-lg transition-all font-semibold text-xs"
-                        data-staff-id="${staffId}" title="Hapus">
+                        data-staff-id="${s.__backendId}" title="Hapus">
                     <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>
                     <span>Hapus</span>
                 </button>
@@ -1984,14 +1984,19 @@ list.appendChild(card);
     });
 
     // 🔥 FIX 3: re-bind event setelah render
-    list.querySelectorAll('.edit-staff-btn').forEach(btn => {
-    btn.onclick = () => editStaff(btn.dataset.staffId);
+   list.querySelectorAll('.edit-staff-btn').forEach(btn => {
+    btn.onclick = () => {
+        console.log('EDIT CLICK ID:', btn.dataset.staffId); // 👈 CEK DI SINI
+        editStaff(btn.dataset.staffId);
+    };
 });
 
 list.querySelectorAll('.delete-staff-btn').forEach(btn => {
-    btn.onclick = () => deleteStaff(btn.dataset.staffId);
+    btn.onclick = () => {
+        console.log('DELETE CLICK ID:', btn.dataset.staffId); // 👈 CEK DI SINI
+        deleteStaff(btn.dataset.staffId);
+    };
 });
-
     lucide.createIcons();
 }
         window.editStaff = (id) => {
