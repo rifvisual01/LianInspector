@@ -2121,40 +2121,72 @@ window.editStaff = (id) => {
 
 // ================= DELETE STAFF =================
 window.deleteStaff = async (id) => {
-  console.log('DELETE FUNCTION JALAN:', id);
+  console.log('DELETE:', id);
 
   const user = sheetUsers.find(u =>
     u.id == id || u.__backendId == id || u.username == id
   );
 
   if (!user) {
-    console.log('❌ USER TIDAK KETEMU');
+    showToast('User tidak ditemukan', 'error');
     return;
   }
 
-  const realId = user.id;
-
-  const confirmDelete = confirm(`Hapus "${user.username}" ?`);
-  if (!confirmDelete) return;
+  // ❌ hapus confirm browser
+  // const confirmDelete = confirm(...)
+  // if (!confirmDelete) return;
 
   const { error } = await supabaseClient
     .from('users')
     .delete()
-    .eq('id', realId);
+    .eq('id', user.id);
 
   if (error) {
     console.error(error);
-    alert('Gagal hapus');
+    showToast('Gagal hapus user', 'error');
     return;
   }
 
-  // refresh data (biar UI sinkron)
+  showToast(`✓ ${user.username} dihapus`);
+
   await loadInitialData();
   renderStaff();
-
-  console.log('✅ DELETE BERHASIL');
 };
 
+		<div id="toast"
+     style="
+       position: fixed;
+       top: 20px;
+       right: 20px;
+       z-index: 999999;
+       display: none;
+       padding: 12px 16px;
+       border-radius: 8px;
+       background: #111827;
+       color: white;
+       font-size: 14px;
+       box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+     ">
+</div> 
+
+		 function showToast(message, type = 'success') {
+  const toast = document.getElementById('toast');
+
+  toast.textContent = message;
+
+  // warna beda
+  if (type === 'error') {
+    toast.style.background = '#dc2626';
+  } else {
+    toast.style.background = '#111827';
+  }
+
+  toast.style.display = 'block';
+
+  setTimeout(() => {
+    toast.style.display = 'none';
+  }, 2000);
+}
 
 		 
         // ============ INSPECTION SYSTEM ============
@@ -3208,36 +3240,12 @@ initInspectionSystem();
 });
 }
 
-		 // ===== FIX CLICK STAFF (STABIL) =====
-document.addEventListener('click', function (e) {
-  const editBtn = e.target.closest('[data-edit-id]');
-  const deleteBtn = e.target.closest('[data-delete-id]');
-  const addBtn = e.target.closest('#addStaffBtn');
-
-  // EDIT
-  if (editBtn) {
-    const id = editBtn.dataset.editId;
-    console.log('EDIT CLICK:', id);
-    editStaff(id);
-  }
-
-  // DELETE
-  if (deleteBtn) {
-    const id = deleteBtn.dataset.deleteId;
-    console.log('DELETE CLICK:', id);
-    deleteStaff(id);
-  }
-
-  // ADD STAFF
-  if (addBtn) {
-    console.log('ADD CLICK');
-    openAddStaffModal();
-  }
-});
 		 
     </script>
     </div>
    </div>
   </div>
- <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9e87def826b50b95',t:'MTc3NTU1MjczMS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9e87def826b50b95',t:'MTc3NTU1MjczMS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();
+ </script>
+ </body>
 </html>
