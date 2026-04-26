@@ -2151,16 +2151,14 @@ window.deleteStaff = async (id) => {
     return;
   }
 
-  const realId = user.id;
-
-  // ❌ HAPUS confirm browser
-  // const confirmDelete = confirm(...)
-  // if (!confirmDelete) return;
+  // ✅ TAMBAHKAN INI (KONFIRMASI)
+  const confirmDelete = confirm(`Hapus "${user.username}" ?`);
+  if (!confirmDelete) return;
 
   const { error } = await supabaseClient
     .from('users')
     .delete()
-    .eq('id', realId);
+    .eq('id', user.id);
 
   if (error) {
     console.error(error);
@@ -2168,7 +2166,6 @@ window.deleteStaff = async (id) => {
     return;
   }
 
-  // ✅ TOAST SUKSES
   showToast(`✓ ${user.username} berhasil dihapus`);
 
   await loadInitialData();
