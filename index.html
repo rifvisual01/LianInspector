@@ -2037,6 +2037,61 @@ list.querySelectorAll('.delete-staff-btn').forEach(btn => {
             }
         };
 
+		 async function editStaff(id) {
+    const user = sheetUsers.find(u => u.__backendId == id);
+    if (!user) return;
+
+    const newUsername = prompt('Ubah username:', user.username);
+    if (!newUsername) return;
+
+    const newPassword = prompt('Ubah password (kosongkan jika tidak diubah):', '');
+
+    const updateData = {
+        username: newUsername
+    };
+
+    if (newPassword) {
+        updateData.password = newPassword;
+    }
+
+    const { error } = await supabaseClient
+        .from('users')
+        .update(updateData)
+        .eq('id', id);
+
+    if (error) {
+        console.error(error);
+        alert('Gagal update');
+        return;
+    }
+
+    await loadInitialData();
+    renderStaff();
+}
+
+		async function deleteStaff(id) {
+    const user = sheetUsers.find(u => u.__backendId == id);
+    if (!user) return;
+
+    const confirmDelete = confirm(`Hapus "${user.username}" ?`);
+    if (!confirmDelete) return;
+
+    const { error } = await supabaseClient
+        .from('users')
+        .delete()
+        .eq('id', id);
+
+    if (error) {
+        console.error(error);
+        alert('Gagal hapus');
+        return;
+    }
+
+    await loadInitialData();
+    renderStaff();
+}
+
+		 
         // ============ INSPECTION SYSTEM ============
         let inspectionStep = 0;
         let inspectionFormData = null;
