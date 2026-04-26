@@ -561,7 +561,8 @@
        </div>
       </div>
      </div><!-- Add Staff Modal -->
-     <div id="staffModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 overflow-y-auto backdrop-blur-sm">
+    <div id="staffModal" 
+class="hidden fixed inset-0 bg-black/50 items-center justify-center p-4 z-50 overflow-y-auto backdrop-blur-sm">
       <div class="card-modern rounded-3xl shadow-2xl p-8 w-full max-w-md my-8 border border-white/20 animate-fade-in">
        <h3 id="staffModalTitle" class="text-2xl font-black text-gray-900 mb-6">Tambah Staff Baru</h3><!-- Admin Edit Warning -->
        <div class="space-y-4">
@@ -2003,16 +2004,12 @@ list.querySelectorAll('.delete-staff-btn').forEach(btn => {
 });
     lucide.createIcons();
 }
-        window.editStaff = async (id) => {
-    console.log('MODAL:', document.getElementById('staffModal'));
+       window.editStaff = async (id) => {
+    console.log('EDIT FUNCTION JALAN:', id);
 
     const user = sheetUsers.find(u => u.__backendId == id);
-    if (!user) {
-        console.log('USER TIDAK KETEMU');
-        return;
-    }
+    if (!user) return;
 
-    // isi form dari data user
     currentEditingStaffId = id;
     isAdminEditMode = false;
 
@@ -2022,12 +2019,12 @@ list.querySelectorAll('.delete-staff-btn').forEach(btn => {
 
     document.getElementById('staffRoleContainer').classList.remove('hidden');
 
-    document.getElementById('staffUsername').disabled = false;
-    document.getElementById('staffPassword').disabled = false;
-    document.getElementById('staffRole').disabled = false;
-
     document.getElementById('staffModalTitle').textContent = '✏️ Edit Staff';
-    document.getElementById('staffModal').classList.remove('hidden');
+
+    const modal = document.getElementById('staffModal');
+
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');   // 🔥 ini kunci
 };
 		 
         window.deleteStaff = async (id) => {
