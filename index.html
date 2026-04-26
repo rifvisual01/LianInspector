@@ -2218,6 +2218,9 @@ window.deleteStaff = (id) => {
   text.textContent = `Hapus "${user.username}" ?`;
 
   modal.classList.remove('hidden');
+modal.style.display = 'flex';
+modal.style.opacity = '1';
+modal.style.zIndex = '9999999'; // 🔥 naikkan layer
 
   console.log('🔥 MODAL HARUSNYA MUNCUL');
 };
