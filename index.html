@@ -929,20 +929,43 @@ card.innerHTML = `
   <div class="text-blue-600 text-sm font-medium">Login</div>
 `;
 
-    // 🔥 FIX KLIK DI SINI
-    card.addEventListener('click', (e) => {
-  console.log('CLICK WORKING'); // 🔥 TEST
+   card.addEventListener('click', () => {
+  console.log('CLICK WORKING');
 
-  document.getElementById('loginUsername').value = user.username;
-  document.getElementById('loginPassword').focus();
+  // 🔥 1. Pastikan login form tampil (kalau ada toggle)
+  const setupSection = document.getElementById('adminSetupForm');
+  const loginSection = document.getElementById('loginForm');
+
+  if (setupSection && loginSection) {
+    setupSection.classList.add('hidden');
+    loginSection.classList.remove('hidden');
+  }
+
+  // 🔥 2. Tunggu DOM siap (penting)
+  setTimeout(() => {
+    const usernameInput = document.getElementById('loginUsername');
+    const passwordInput = document.getElementById('loginPassword');
+
+    if (!usernameInput || !passwordInput) {
+      console.log('❌ INPUT TIDAK DITEMUKAN');
+      return;
+    }
+
+    // 🔥 3. Isi username otomatis
+    usernameInput.value = user.username;
+
+    // 🔥 4. Fokus ke password
+    passwordInput.focus();
+
+    // ✨ BONUS UX (highlight sebentar)
+    usernameInput.classList.add('ring-2', 'ring-blue-400');
+
+    setTimeout(() => {
+      usernameInput.classList.remove('ring-2', 'ring-blue-400');
+    }, 800);
+
+  }, 100);
 });
-
-    list.appendChild(card);
-  });
-}
-		 
-        document.getElementById('menuBtn').addEventListener('click', openSidebar);
-        document.getElementById('sidebarOverlay').addEventListener('click', closeSidebar);
 
         function renderNavigation() {
             const navMenu = document.getElementById('navMenu');
