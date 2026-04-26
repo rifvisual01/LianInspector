@@ -2139,37 +2139,51 @@ window.editStaff = (id) => {
 };
 
 		 
-// tombol batal
-document.getElementById('cancelDeleteBtn').onclick = () => {
-  document.getElementById('confirmDeleteModal').classList.add('hidden');
-  deleteTargetId = null;
-};
+document.addEventListener('DOMContentLoaded', () => {
 
-// tombol hapus
-document.getElementById('confirmDeleteBtn').onclick = async () => {
-  if (!deleteTargetId) return;
+  const cancelBtn = document.getElementById('cancelDeleteBtn');
+  const confirmBtn = document.getElementById('confirmDeleteBtn');
 
-  const { error } = await supabaseClient
-    .from('users')
-    .delete()
-    .eq('id', deleteTargetId);
-
-  if (error) {
-    console.error(error);
-    showToast('Gagal hapus user', 'error');
-    return;
+  // tombol batal
+  if (cancelBtn) {
+    cancelBtn.addEventListener('click', () => {
+      const modal = document.getElementById('confirmDeleteModal');
+      modal.style.display = 'none';
+      deleteTargetId = null;
+    });
   }
 
-  showToast('✓ User berhasil dihapus');
+  // tombol hapus
+  if (confirmBtn) {
+    confirmBtn.addEventListener('click', async () => {
+      if (!deleteTargetId) return;
 
-  document.getElementById('confirmDeleteModal').classList.add('hidden');
+      const { error } = await supabaseClient
+        .from('users')
+        .delete()
+        .eq('id', deleteTargetId);
 
-  deleteTargetId = null;
+      if (error) {
+        console.error(error);
+        showToast('Gagal hapus user', 'error');
+        return;
+      }
 
-  await loadInitialData();
-  renderStaff();
-};
+      showToast('✓ User berhasil dihapus');
 
+      const modal = document.getElementById('confirmDeleteModal');
+      modal.style.display = 'none';
+
+      deleteTargetId = null;
+
+      await loadInitialData();
+      renderStaff();
+    });
+  }
+
+});
+
+		 
 // ================= DELETE STAFF =================
 window.deleteStaff = (id) => {
   console.log('🔥 MASUK DELETE STAFF:', id);
@@ -3279,7 +3293,9 @@ initInspectionSystem();
    </div>
   </div>
 
-<div id="confirmDeleteModal" class="hidden fixed inset-0 z-[999999] flex items-center justify-center bg-black/40">
+<div id="confirmDeleteModal"
+     style="display: none;"
+     class="fixed inset-0 z-[999999] flex items-center justify-center bg-black/40">
   <div class="bg-white rounded-xl shadow-lg w-full max-w-sm p-5">
     <h3 class="text-lg font-bold mb-2">Konfirmasi</h3>
     <p id="confirmDeleteText" class="text-sm text-gray-600 mb-4">
