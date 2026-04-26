@@ -932,7 +932,6 @@ card.innerHTML = `
    card.addEventListener('click', () => {
   console.log('CLICK WORKING');
 
-  // 🔥 1. Pastikan login form tampil (kalau ada toggle)
   const setupSection = document.getElementById('adminSetupForm');
   const loginSection = document.getElementById('loginForm');
 
@@ -941,7 +940,6 @@ card.innerHTML = `
     loginSection.classList.remove('hidden');
   }
 
-  // 🔥 2. Tunggu DOM siap (penting)
   setTimeout(() => {
     const usernameInput = document.getElementById('loginUsername');
     const passwordInput = document.getElementById('loginPassword');
@@ -951,13 +949,9 @@ card.innerHTML = `
       return;
     }
 
-    // 🔥 3. Isi username otomatis
     usernameInput.value = user.username;
-
-    // 🔥 4. Fokus ke password
     passwordInput.focus();
 
-    // ✨ BONUS UX (highlight sebentar)
     usernameInput.classList.add('ring-2', 'ring-blue-400');
 
     setTimeout(() => {
@@ -966,6 +960,8 @@ card.innerHTML = `
 
   }, 100);
 });
+
+list.appendChild(card);
 
 	   document.getElementById('menuBtn').addEventListener('click', openSidebar);
         document.getElementById('sidebarOverlay').addEventListener('click', closeSidebar);
