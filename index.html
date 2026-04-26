@@ -3060,18 +3060,27 @@ list.appendChild(card);
     document.addEventListener('DOMContentLoaded', async () => {
         console.log('🚀 Application initialized');
 
-        await loadInitialData(); // ✅ aman
+       await loadInitialData(); // ✅ ambil data dulu
 
-        lucide.createIcons();
-        initInspectionSystem();
+// 🔥 WAJIB TAMBAH INI
+console.log('Users loaded:', sheetUsers);
+renderStaff();
+
+lucide.createIcons();
+initInspectionSystem();
     });
 } else {
     console.log('🚀 Application initialized (already loaded)');
 
-    loadInitialData().then(() => { // ✅ GANTI JADI INI
-        lucide.createIcons();
-        initInspectionSystem();
-    });
+    loadInitialData().then(() => {
+
+  // 🔥 WAJIB TAMBAH DI SINI JUGA
+  console.log('Users loaded:', sheetUsers);
+  renderStaff();
+
+  lucide.createIcons();
+  initInspectionSystem();
+});
 }
     </script>
     </div>
