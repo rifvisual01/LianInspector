@@ -567,8 +567,8 @@
      </div>
 		
 		<!-- Add Staff Modal -->
- <div id="staffModal" style="display:none"
-class="fixed inset-0 bg-black/50 items-center justify-center p-4 z-50 overflow-y-auto backdrop-blur-sm">
+ <div id="staffModal"
+class="hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 overflow-y-auto backdrop-blur-sm">
       <div class="card-modern rounded-3xl shadow-2xl p-8 w-full max-w-md my-8 border border-white/20 animate-fade-in">
        <h3 id="staffModalTitle" class="text-2xl font-black text-gray-900 mb-6">Tambah Staff Baru</h3><!-- Admin Edit Warning -->
        <div class="space-y-4">
@@ -2013,37 +2013,29 @@ list.querySelectorAll('.delete-staff-btn').forEach(btn => {
     lucide.createIcons();
 }
        window.editStaff = async (id) => {
-    console.log('EDIT FUNCTION JALAN:', id);
+  console.log('EDIT FUNCTION JALAN:', id);
 
-    // 🔍 ambil user
-    const user = sheetUsers.find(u => u.__backendId == id);
-    if (!user) {
-        console.log('❌ USER TIDAK KETEMU');
-        return;
-    }
+  const user = sheetUsers.find(u => u.__backendId == id);
+  if (!user) {
+    console.log('USER TIDAK KETEMU');
+    return;
+  }
 
-    // 🧠 simpan state edit
-    window.currentEditingStaffId = id;
+  currentEditingStaffId = id;
+  isAdminEditMode = false;
 
-    // ✍️ isi form
-    document.getElementById('staffUsername').value = user.username || '';
-    document.getElementById('staffPassword').value = user.password || '';
-    document.getElementById('staffRole').value = user.role || 'inspector';
+  document.getElementById('staffUsername').value = user.username || '';
+  document.getElementById('staffPassword').value = user.password || '';
+  document.getElementById('staffRole').value = user.role || 'inspector';
 
-    // 🏷️ ubah title
-    document.getElementById('staffModalTitle').textContent = '✏️ Edit Staff';
+  document.getElementById('staffRoleContainer').classList.remove('hidden');
+  document.getElementById('staffModalTitle').textContent = '✏️ Edit Staff';
 
-    // 🔥 TAMPILKAN MODAL (INI YANG PALING PENTING)
-    const modal = document.getElementById('staffModal');
+  const modal = document.getElementById('staffModal');
 
-    if (!modal) {
-        console.log('❌ MODAL TIDAK KETEMU');
-        return;
-    }
+  modal.classList.remove('hidden');
 
-    modal.style.display = 'flex';
-
-    console.log('✅ MODAL DITAMPILKAN');
+  console.log('MODAL DITAMPILKAN');
 };
 		 
         window.deleteStaff = async (id) => {
