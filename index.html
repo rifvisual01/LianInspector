@@ -633,7 +633,20 @@
       </div>
      </div>
 		
-		<!-- Add Staff Modal -->
+		
+		<!-- Toast Messages -->
+     <div id="toast" class="fixed bottom-4 right-4 bg-green-600 text-white px-6 py-3 rounded-xl shadow-lg hidden z-50 flex items-center gap-2 font-semibold">
+      <i data-lucide="check-circle" style="width: 20px; height: 20px;"></i><span id="toastMessage"></span>
+     </div>
+		
+		<!-- Report Modal -->
+     <div id="reportModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 overflow-y-auto backdrop-blur-sm">
+      <div class="card-modern rounded-2xl shadow-2xl p-6 w-full max-w-2xl my-8 border border-white/20 animate-fade-in">
+       <div class="flex items-center justify-between mb-6">
+        <h2 class="text-2xl font-bold text-gray-900">📋 Laporan Inspeksi</h2><button id="closeReportBtn" class="p-2 hover:bg-gray-200 rounded-lg transition-all"><i data-lucide="x" style="width: 24px; height: 24px;"></i></button>
+       </div>
+
+		  <!-- Add Staff Modal -->
  <div id="staffModal"
 class="hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 overflow-y-auto backdrop-blur-sm">
       <div class="card-modern rounded-3xl shadow-2xl p-8 w-full max-w-md my-8 border border-white/20 animate-fade-in">
@@ -656,15 +669,7 @@ class="hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-5
       </div>
      </div>
 		
-		<!-- Toast Messages -->
-     <div id="toast" class="fixed bottom-4 right-4 bg-green-600 text-white px-6 py-3 rounded-xl shadow-lg hidden z-50 flex items-center gap-2 font-semibold">
-      <i data-lucide="check-circle" style="width: 20px; height: 20px;"></i><span id="toastMessage"></span>
-     </div><!-- Report Modal -->
-     <div id="reportModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 overflow-y-auto backdrop-blur-sm">
-      <div class="card-modern rounded-2xl shadow-2xl p-6 w-full max-w-2xl my-8 border border-white/20 animate-fade-in">
-       <div class="flex items-center justify-between mb-6">
-        <h2 class="text-2xl font-bold text-gray-900">📋 Laporan Inspeksi</h2><button id="closeReportBtn" class="p-2 hover:bg-gray-200 rounded-lg transition-all"><i data-lucide="x" style="width: 24px; height: 24px;"></i></button>
-       </div><!-- Report Content -->
+		  <!-- Report Content -->
        <div id="reportContent" class="space-y-4 max-h-96 overflow-y-auto"></div><!-- Report Actions -->
        <div class="flex gap-3 mt-6 pt-4 border-t border-gray-200">
         <button id="printReportBtn" class="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-all"><i data-lucide="printer" style="width: 18px; height: 18px;"></i>Cetak</button> <button id="downloadReportBtn" class="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-all"><i data-lucide="download" style="width: 18px; height: 18px;"></i>Download</button> <button id="closeReportBtnAction" class="flex-1 px-4 py-2 border-2 border-gray-300 text-gray-700 hover:bg-gray-100 rounded-lg font-semibold transition-all">Tutup</button>
