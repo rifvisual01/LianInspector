@@ -1132,12 +1132,22 @@ function getTable(type) {
 
            setButtonLoading(button, true);
 
+const errorEl = document.getElementById('loginError');
+errorEl.classList.add('hidden'); // reset dulu
+
 const { data: user, error } = await supabaseClient
   .from('users')
   .select('*')
   .eq('username', username)
   .eq('password', password)
   .single();
+
+// 🔥 TAMBAH DI SINI (SETELAH QUERY)
+if (error || !user) {
+  errorEl.classList.remove('hidden');
+  setButtonLoading(button, false);
+  return;
+}
 
 setButtonLoading(button, false);
 
@@ -1205,14 +1215,6 @@ if (setupBtn) {
         // ✅ buka modal
         document.getElementById('setupAdminModal').style.display = 'flex';
     });
-}
-
-		 		 const errorEl = document.getElementById('loginError');
-errorEl.classList.add('hidden'); // reset
-
-if (!user || user.password !== password) {
-  errorEl.classList.remove('hidden'); // tampilkan error
-  return;
 }
 		 
 		function renderQuickLogin() {
