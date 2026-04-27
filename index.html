@@ -1105,8 +1105,47 @@ showToast(`Selamat datang, ${user.username}!`);
             document.getElementById('loginScreen').classList.toggle('hidden', !show);
             document.getElementById('mainScreen').classList.toggle('hidden', show);
         }
+// ================= CEK ADMIN ADA =================
+function checkAdminExists() {
+    const setupBtn = document.getElementById('setupAdminBtn');
+
+    if (!setupBtn) return;
+
+    const hasAdmin = allUsers.some(u => u.role === 'admin');
+
+    // 🔥 kalau admin sudah ada → hilangkan tombol
+    if (hasAdmin) {
+        setupBtn.style.display = 'none';
+    } else {
+        setupBtn.style.display = 'block';
+    }
+
+    console.log('ADMIN ADA:', hasAdmin);
+}
 
 
+// ================= EVENT SETUP ADMIN =================
+const setupBtn = document.getElementById('setupAdminBtn');
+
+if (setupBtn) {
+    setupBtn.replaceWith(setupBtn.cloneNode(true)); // 🔥 kill event lama
+
+    document.getElementById('setupAdminBtn')?.addEventListener('click', () => {
+        console.log('SETUP ADMIN DIKLIK');
+
+        const hasAdmin = allUsers.some(u => u.role === 'admin');
+
+        // 🔥 DOUBLE PROTECTION
+        if (hasAdmin) {
+            showToast('Admin sudah ada', 'error');
+            return;
+        }
+
+        // ✅ buka modal
+        document.getElementById('setupAdminModal').style.display = 'flex';
+    });
+}
+		 
 		function renderQuickLogin() {
   const list = document.getElementById('quickLoginList');
   const divider = document.getElementById('quickLoginDivider');
@@ -2150,6 +2189,7 @@ document.getElementById('saveStaffBtn')?.addEventListener('click', async () => {
 
         await loadInitialData();
         renderStaff();
+		checkAdminExists();
 
     } catch (err) {
         console.error('FATAL ERROR:', err);
