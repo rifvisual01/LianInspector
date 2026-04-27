@@ -3263,6 +3263,67 @@ initInspectionSystem();
   initInspectionSystem();
 });
 }
+
+		 // ================= STAFF MODAL BUTTONS =================
+
+function initStaffModalButtons() {
+  const cancelBtn = document.getElementById('cancelStaffBtn');
+  const saveBtn = document.getElementById('saveStaffBtn');
+
+  console.log('INIT BUTTON:', cancelBtn, saveBtn);
+
+  if (cancelBtn) {
+    cancelBtn.onclick = () => {
+      console.log('❎ BATAL DIKLIK');
+
+      document.getElementById('staffModal').style.display = 'none';
+      currentEditingStaffId = null;
+    };
+  }
+
+  if (saveBtn) {
+    saveBtn.onclick = async () => {
+      console.log('💾 SIMPAN DIKLIK');
+
+      const username = document.getElementById('staffUsername').value;
+      const password = document.getElementById('staffPassword').value;
+      const role = document.getElementById('staffRole').value;
+
+      if (!username) {
+        showToast('Username wajib diisi', 'error');
+        return;
+      }
+
+      const { error } = await supabaseClient
+        .from('users')
+        .update({
+          username,
+          password,
+          role
+        })
+        .eq('id', currentEditingStaffId);
+
+      if (error) {
+        console.error(error);
+        showToast('Gagal update user', 'error');
+        return;
+      }
+
+      showToast('✓ User berhasil diupdate');
+
+      document.getElementById('staffModal').style.display = 'none';
+      currentEditingStaffId = null;
+
+      await loadInitialData();
+      renderStaff();
+    };
+  }
+}
+
+// 🔥 WAJIB DIPANGGIL
+initStaffModalButtons();
+
+		 
     </script> 
 	 </div>
    </div>
