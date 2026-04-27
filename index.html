@@ -2089,56 +2089,56 @@ document.getElementById('saveStaffBtn')?.addEventListener('click', async () => {
 
     try {
 
-        // ================= UPDATE =================
-        if (currentEditingStaffId) {
-            const { error } = await supabaseClient
-                .from('users')
-                .update({
-                    username,
-                    password,
-                    role
-                })
-                .eq('id', currentEditingStaffId);
+        // ================= UPDATE / CREATE =================
 
-            if (error) {
-                console.error(error);
-                showToast('Gagal memperbarui staff', 'error');
-                return;
+// deteksi mode yang aman (biar tidak nyelip ke UPDATE)
+const isEditMode =
+  currentEditingStaffId &&
+  typeof currentEditingStaffId === 'string' &&
+  currentEditingStaffId.length > 10;
+
+if (isEditMode) {
+    // ================= UPDATE =================
+    const { error } = await supabaseClient
+        .from('users')
+        .update({
+            username,
+            password,
+            role
+        })
+        .eq('id', currentEditingStaffId);
+
+    if (error) {
+        console.error(error);
+        showToast('Gagal memperbarui staff', 'error');
+        return;
+    }
+
+    showToast('✓ Staff berhasil diperbarui!');
+
+} else {
+    // ================= CREATE =================
+    const { error } = await supabaseClient
+        .from('users')
+        .insert([
+            {
+                username,
+                password,
+                role
             }
+        ]);
 
-            showToast('✓ Staff berhasil diperbarui!');
+    if (error) {
+        console.error(error);
+        showToast('Gagal menambahkan staff', 'error');
+        return;
+    }
 
-        } else {
-            // ================= CREATE =================
+    showToast('✓ Staff berhasil ditambahkan!');
+}
 
-            if (allUsers.find(u => u.username === username)) {
-                showToast('Username sudah terdaftar', 'error');
-                return;
-            }
-
-            console.log('INSERT DATA:', { username, password, role });
-
-            const { error } = await supabaseClient
-                .from('users')
-                .insert([
-                    {
-                        username,
-                        password,
-                        role
-                        // ❌ JANGAN kirim id
-                        // ❌ JANGAN kirim created kalau DB sudah default
-                    }
-                ]);
-
-            if (error) {
-                console.error(error);
-                showToast('Gagal menambahkan staff', 'error');
-                return;
-            }
-
-            showToast('✓ Staff berhasil ditambahkan!');
-        }
-
+// reset state (penting)
+currentEditingStaffId = null;
         // ================= SUCCESS =================
         document.getElementById('staffModal').style.display = 'none';
 
