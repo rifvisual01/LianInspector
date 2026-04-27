@@ -117,15 +117,28 @@
 		 
 		 <!-- Admin Setup or Login -->
       <div id="setupOrLogin" class="space-y-3">
-       <div class="flex gap-3">
-        <button id="showAdminSetupBtn" class="flex-1 bg-gradient-to-r from-blue-700 to-blue-800 hover:from-blue-800 hover:to-blue-900 text-white font-bold py-3 rounded-xl transition-all transform hover:scale-105 shadow-lg text-sm">Setup Admin</button> <button id="showLoginBtn" class="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold py-3 rounded-xl transition-all transform hover:scale-105 shadow-lg text-sm">Login</button>
-       </div>
-       <div id="quickLoginDivider" class="hidden text-center py-2">
-        <p class="text-gray-600 text-xs font-semibold">ATAU LOGIN DENGAN AKUN TERSIMPAN</p>
-       </div>
-       <div id="quickLoginList" class="space-y-2"></div>
-      </div>
-		 
+  <div class="flex gap-3">
+    
+    <!-- 🔥 DEFAULT HIDDEN -->
+    <button id="showAdminSetupBtn"
+      style="display: none;"
+      class="flex-1 bg-gradient-to-r from-blue-700 to-blue-800 text-white font-bold py-3 rounded-xl">
+      Setup Admin
+    </button>
+
+    <button id="showLoginBtn"
+      class="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-bold py-3 rounded-xl">
+      Login
+    </button>
+
+  </div>
+
+  <div id="quickLoginDivider" class="hidden text-center py-2">
+    <p class="text-gray-600 text-xs font-semibold">ATAU LOGIN DENGAN AKUN TERSIMPAN</p>
+  </div>
+
+  <div id="quickLoginList" class="space-y-2"></div>
+</div>
 		 <!-- Admin Setup Form -->
       <div id="adminSetupForm" class="hidden space-y-6">
        <div class="mb-6">
@@ -1112,16 +1125,12 @@ function checkAdminExists() {
   const setupBtn = document.getElementById('showAdminSetupBtn');
   if (!setupBtn) return;
 
-  // 🔥 cek: ada user atau tidak
   const hasUser = (allUsers || []).length > 0;
 
   console.log('HAS USER:', hasUser);
 
-  if (hasUser) {
-    setupBtn.style.display = 'none'; // ❌ sembunyikan
-  } else {
-    setupBtn.style.display = 'inline-flex'; // ✅ tampilkan
-  }
+  // 🔥 kebalikan dari sebelumnya
+  setupBtn.style.display = hasUser ? 'none' : 'inline-flex';
 }
 
 		 
