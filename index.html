@@ -1142,11 +1142,9 @@ const { data: user, error } = await supabaseClient
   .eq('password', password)
   .single();
 
-// 🔥 TAMBAH DI SINI (SETELAH QUERY)
+// 🔥 HANYA TAMPILKAN ERROR (TANPA HENTIKAN FLOW)
 if (error || !user) {
   errorEl.classList.remove('hidden');
-  setButtonLoading(button, false);
-  return;
 }
 
 setButtonLoading(button, false);
