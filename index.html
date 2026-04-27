@@ -1905,7 +1905,7 @@ list.appendChild(card);
         });
 
         document.getElementById('cancelStaffBtn')?.addEventListener('click', () => {
-            document.getElementById('staffModal').classList.add('hidden');
+            document.getElementById('staffModal').style.display = 'none';
             currentEditingStaffId = null;
             isAdminEditMode = false;
         });
@@ -1944,7 +1944,7 @@ list.appendChild(card);
                     setButtonLoading(button, false);
                     
                     if (result.isOk) {
-                        document.getElementById('staffModal').classList.add('hidden');
+                        document.getElementById('staffModal').style.display = 'none';
                         currentEditingStaffId = null;
                         isAdminEditMode = false;
                         showToast('✓ Staff berhasil diperbarui!');
@@ -1977,7 +1977,7 @@ list.appendChild(card);
                 setButtonLoading(button, false);
                 
                 if (result.isOk) {
-                    document.getElementById('staffModal').classList.add('hidden');
+                    document.getElementById('staffModal').style.display = 'none';
                     showToast('✓ Staff berhasil ditambahkan!');
                 } else {
                     showToast('Gagal menambahkan staff', 'error');
