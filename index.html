@@ -1054,7 +1054,15 @@ function getTable(type) {
             document.getElementById('sidebarOverlay').classList.remove('hidden');
         }
 
-        // Login & Setup	 
+        // Login & Setup
+		 const errorEl = document.getElementById('loginError');
+errorEl.classList.add('hidden'); // reset
+
+if (!user || user.password !== password) {
+  errorEl.classList.remove('hidden'); // tampilkan error
+  return;
+}
+		 
         const showAdminSetupBtn = document.getElementById('showAdminSetupBtn');
         if (showAdminSetupBtn) {
             showAdminSetupBtn.addEventListener('click', function(e) {
@@ -1132,15 +1140,13 @@ function getTable(type) {
 
            setButtonLoading(button, true);
 
-
 const { data: user, error } = await supabaseClient
   .from('users')
   .select('*')
   .eq('username', username)
   .eq('password', password)
-  .maybeSingle(); // 🔥 GANTI INI
+  .single();
 
-			
 setButtonLoading(button, false);
 
 if (error || !user) {
