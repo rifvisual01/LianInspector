@@ -2124,17 +2124,12 @@ document.getElementById('saveStaffBtn')?.addEventListener('click', async () => {
                 return;
             }
 
-            const newStaff = {
-                type: 'user',
-                id: 'user_' + Date.now(),
-                name: '',
-                email: '',
-                username,
-                password,
-                role,
-                createdAt: new Date().toISOString()
-            };
-
+         const newStaff = {
+    username,
+    password,
+    role,
+    created: new Date().toISOString()
+};
             const result = await window.dataSdk.create(newStaff);
 
             if (result.isOk) {
