@@ -1112,24 +1112,28 @@ showToast(`Selamat datang, ${user.username}!`);
         }
 // ================= CEK ADMIN ADA =================
 function checkAdminExists() {
-    const setupBtn = document.getElementById('setupAdminBtn');
-    if (!setupBtn) return;
+  const setupBtn = document.getElementById('setupAdminBtn');
 
-    // 🔥 kalau data belum ada → jangan ambil keputusan dulu
-    if (!allUsers || allUsers.length === 0) {
-        console.log('⏳ Users belum siap');
-        return;
-    }
+  // kalau tombol tidak ada → skip
+  if (!setupBtn) return;
 
-    const hasAdmin = allUsers.some(u => u.role === 'admin');
+  // 🔥 pastikan data ada
+  if (!allUsers || allUsers.length === 0) {
+    console.log('ADMIN CHECK: data belum siap');
+    return;
+  }
 
-    console.log('ADMIN ADA:', hasAdmin, allUsers);
+  // 🔥 cek admin
+  const hasAdmin = allUsers.some(u => u.role === 'admin');
 
-    if (hasAdmin) {
-        setupBtn.style.display = 'none';
-    } else {
-        setupBtn.style.display = 'block';
-    }
+  console.log('ADMIN ADA:', hasAdmin);
+
+  if (hasAdmin) {
+    // 🔥 HARD HIDE (bukan cuma display)
+    setupBtn.remove(); 
+  } else {
+    setupBtn.style.display = 'inline-flex';
+  }
 }
 
 // ================= EVENT SETUP ADMIN =================
