@@ -943,10 +943,20 @@ function getTable(type) {
   sheetItems = items || [];
   sheetInspections = inspections || [];
 
-  // 🔥 WAJIB: cek admin DI SINI
-  checkAdminExists();
+  // 🔥 ================= FIX UTAMA =================
+  const setupBtn = document.getElementById('showAdminSetupBtn');
 
-  // 🔥 baru render setelah semua siap
+  if (setupBtn) {
+    const hasAdmin = (allUsers || []).some(u => u.role === 'admin');
+
+    console.log('ADMIN ADA (FINAL):', hasAdmin);
+
+    if (hasAdmin) {
+      setupBtn.remove(); // 🔥 hapus total dari DOM
+    }
+  }
+
+  // 🔥 render terakhir
   renderQuickLogin();
 }
 		 
