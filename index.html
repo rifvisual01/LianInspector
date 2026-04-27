@@ -2031,7 +2031,10 @@ document.getElementById('addStaffBtn')?.addEventListener('click', () => {
     document.getElementById('staffPassword').value = '';
     document.getElementById('staffRole').value = 'inspector';
 
-    document.getElementById('staffRoleContainer').classList.remove('hidden');
+    const roleContainer = document.getElementById('staffRoleContainer');
+if (roleContainer) {
+    roleContainer.classList.remove('hidden');
+}
 
     document.getElementById('staffUsername').disabled = false;
     document.getElementById('staffPassword').disabled = false;
