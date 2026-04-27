@@ -1054,15 +1054,7 @@ function getTable(type) {
             document.getElementById('sidebarOverlay').classList.remove('hidden');
         }
 
-        // Login & Setup
-		 const errorEl = document.getElementById('loginError');
-errorEl.classList.add('hidden'); // reset
-
-if (!user || user.password !== password) {
-  errorEl.classList.remove('hidden'); // tampilkan error
-  return;
-}
-		 
+        // Login & Setup	 
         const showAdminSetupBtn = document.getElementById('showAdminSetupBtn');
         if (showAdminSetupBtn) {
             showAdminSetupBtn.addEventListener('click', function(e) {
@@ -1213,6 +1205,14 @@ if (setupBtn) {
         // ✅ buka modal
         document.getElementById('setupAdminModal').style.display = 'flex';
     });
+}
+
+		 		 const errorEl = document.getElementById('loginError');
+errorEl.classList.add('hidden'); // reset
+
+if (!user || user.password !== password) {
+  errorEl.classList.remove('hidden'); // tampilkan error
+  return;
 }
 		 
 		function renderQuickLogin() {
