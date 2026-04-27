@@ -929,22 +929,26 @@ function getTable(type) {
   const { data: items } = await supabaseClient.from('items').select('*');
   const { data: inspections } = await supabaseClient.from('inspections').select('*');
 
-  // 🔥 WAJIB: isi semua dulu
+  // ================= USERS =================
   usersList = (users || []).map(u => ({
-  ...u,
-  __backendId: u.id // 🔥 INI KUNCI NYA
-}));
+    ...u,
+    __backendId: u.id
+  }));
 
-sheetUsers = usersList;
-allUsers = usersList;
+  sheetUsers = usersList;
+  allUsers = usersList;
 
+  // ================= DATA LAIN =================
   sheetCategories = categories || [];
   sheetItems = items || [];
   sheetInspections = inspections || [];
 
-  // 🔥 BARU render setelah data siap
+  // 🔥 WAJIB: cek admin DI SINI
+  checkAdminExists();
+
+  // 🔥 baru render setelah semua siap
   renderQuickLogin();
-}	 
+}
 		 
         function showToast(message, type = 'success') {
             const toast = document.getElementById('toast');
@@ -2193,7 +2197,6 @@ document.getElementById('saveStaffBtn')?.addEventListener('click', async () => {
 
         await loadInitialData();
         renderStaff();
-		checkAdminExists();
 
     } catch (err) {
         console.error('FATAL ERROR:', err);
