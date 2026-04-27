@@ -1132,8 +1132,6 @@ function getTable(type) {
 
            setButtonLoading(button, true);
 
-const errorEl = document.getElementById('loginError');
-errorEl.classList.add('hidden'); // reset dulu
 
 const { data: user, error } = await supabaseClient
   .from('users')
@@ -1141,11 +1139,6 @@ const { data: user, error } = await supabaseClient
   .eq('username', username)
   .eq('password', password)
   .maybeSingle(); // 🔥 GANTI INI
-
-if (!user) {
-  errorEl.classList.remove('hidden');
-  return;
-}
 
 			
 setButtonLoading(button, false);
