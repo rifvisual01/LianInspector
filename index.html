@@ -2089,58 +2089,57 @@ document.getElementById('saveStaffBtn')?.addEventListener('click', async () => {
 
     try {
 
+        // ================= UPDATE =================
         if (currentEditingStaffId) {
-            // ================= UPDATE =================
-            const staffToUpdate = allUsers.find(u => u.__backendId === currentEditingStaffId);
-
-            if (staffToUpdate) {
-
-                if (username !== staffToUpdate.username && allUsers.find(u => u.username === username)) {
-                    showToast('Username sudah terdaftar', 'error');
-                    return;
-                }
-
-                const updatedStaff = {
-                    ...staffToUpdate,
+            const { error } = await supabaseClient
+                .from('users')
+                .update({
                     username,
                     password,
                     role
-                };
+                })
+                .eq('id', currentEditingStaffId);
 
-                const result = await window.dataSdk.update(updatedStaff);
-
-                if (result.isOk) {
-                    showToast('✓ Staff berhasil diperbarui!');
-                } else {
-                    showToast('Gagal memperbarui staff', 'error');
-                    return;
-                }
+            if (error) {
+                console.error(error);
+                showToast('Gagal memperbarui staff', 'error');
+                return;
             }
+
+            showToast('✓ Staff berhasil diperbarui!');
 
         } else {
             // ================= CREATE =================
+
             if (allUsers.find(u => u.username === username)) {
                 showToast('Username sudah terdaftar', 'error');
                 return;
             }
 
-         const newStaff = {
-    username,
-    password,
-    role,
-    created: new Date().toISOString()
-};
-            const result = await window.dataSdk.create(newStaff);
+            console.log('INSERT DATA:', { username, password, role });
 
-            if (result.isOk) {
-                showToast('✓ Staff berhasil ditambahkan!');
-            } else {
+            const { error } = await supabaseClient
+                .from('users')
+                .insert([
+                    {
+                        username,
+                        password,
+                        role
+                        // ❌ JANGAN kirim id
+                        // ❌ JANGAN kirim created kalau DB sudah default
+                    }
+                ]);
+
+            if (error) {
+                console.error(error);
                 showToast('Gagal menambahkan staff', 'error');
                 return;
             }
+
+            showToast('✓ Staff berhasil ditambahkan!');
         }
 
-        // ================= SUCCESS FINAL =================
+        // ================= SUCCESS =================
         document.getElementById('staffModal').style.display = 'none';
 
         currentEditingStaffId = null;
@@ -2154,9 +2153,10 @@ document.getElementById('saveStaffBtn')?.addEventListener('click', async () => {
         showToast('Terjadi kesalahan', 'error');
     }
 
-    // 🔥 PASTIKAN tombol balik normal (APAPUN YANG TERJADI)
+    // 🔥 WAJIB: reset tombol
     setButtonLoading(button, false);
 });
+		 
 
       function renderStaff() {
     const list = document.getElementById('staffList');
