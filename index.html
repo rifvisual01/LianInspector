@@ -1140,13 +1140,14 @@ const { data: user, error } = await supabaseClient
   .select('*')
   .eq('username', username)
   .eq('password', password)
-  .single();
+  .maybeSingle(); // 🔥 GANTI INI
 
-// 🔥 HANYA TAMPILKAN ERROR (TANPA HENTIKAN FLOW)
-if (error || !user) {
+if (!user) {
   errorEl.classList.remove('hidden');
+  return;
 }
 
+			
 setButtonLoading(button, false);
 
 if (error || !user) {
