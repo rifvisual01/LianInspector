@@ -922,7 +922,6 @@ function getTable(type) {
 		async function loadInitialData() {
   const { data: users } = await supabaseClient.from('users').select('*');
 
-  // 🔥 DEBUG
   console.log('USERS DARI SUPABASE:', users);
 
   const { data: categories } = await supabaseClient.from('categories').select('*');
@@ -937,6 +936,18 @@ function getTable(type) {
 
   sheetUsers = usersList;
   allUsers = usersList;
+
+  // ================= DATA LAIN =================
+  sheetCategories = categories || [];
+  sheetItems = items || [];
+  sheetInspections = inspections || [];
+
+  // 🔥 INI KUNCI NYA (WAJIB DI SINI)
+  checkAdminExists();
+
+  // 🔥 render setelah semua siap
+  renderQuickLogin();
+}
 
   // ================= DATA LAIN =================
   sheetCategories = categories || [];
@@ -1145,24 +1156,18 @@ showToast(`Selamat datang, ${user.username}!`);
         }
 // ================= CEK ADMIN ADA =================
 function checkAdminExists() {
-  const setupBtn = document.getElementById('showAdminSetupBtn'); // 🔥 FIX ID
-
+  const setupBtn = document.getElementById('showAdminSetupBtn');
   if (!setupBtn) return;
 
-  if (!allUsers || allUsers.length === 0) {
-    console.log('ADMIN CHECK: data belum siap');
-    return;
-  }
+  // 🔥 cek: ada user atau tidak
+  const hasUser = (allUsers || []).length > 0;
 
-  const hasAdmin = allUsers.some(u => u.role === 'admin');
+  console.log('HAS USER:', hasUser);
 
-  console.log('ADMIN ADA (FINAL):', hasAdmin);
-
-  if (hasAdmin) {
-    // 🔥 HARD REMOVE
-    setupBtn.remove();
+  if (hasUser) {
+    setupBtn.style.display = 'none'; // ❌ sembunyikan
   } else {
-    setupBtn.style.display = 'inline-flex';
+    setupBtn.style.display = 'inline-flex'; // ✅ tampilkan
   }
 }
 
