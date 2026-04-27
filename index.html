@@ -958,28 +958,30 @@ function getTable(type) {
 
   // 🔥 render terakhir
   renderQuickLogin();
-}
+} 
 
-		 // 🔥 GUARD SETUP ADMIN (ANTI BYPASS)
-document.addEventListener('click', function (e) {
-  const btn = e.target.closest('#showAdminSetupBtn');
-
+		 
+		document.addEventListener('DOMContentLoaded', () => {
+  const btn = document.getElementById('showAdminSetupBtn');
   if (!btn) return;
 
-  const hasAdmin = (allUsers || []).some(u => u.role === 'admin');
+  btn.addEventListener('click', (e) => {
+    const hasAdmin = (allUsers || []).some(u => u.role === 'admin');
 
-  if (hasAdmin) {
-    e.preventDefault();
-    e.stopPropagation();
+    if (hasAdmin) {
+      e.preventDefault();
+      e.stopImmediatePropagation(); // 🔥 LEBIH KUAT dari stopPropagation
 
-    console.log('⛔ BLOCK SETUP ADMIN');
-    showToast('Admin sudah ada', 'error');
+      console.log('⛔ BLOCK SETUP ADMIN TOTAL');
+      showToast('Admin sudah ada', 'error');
 
-    return;
-  }
+      return false;
+    }
 
-  console.log('✅ BOLEH SETUP ADMIN');
+    console.log('✅ BOLEH SETUP ADMIN');
+  }, true); // 🔥 CAPTURE MODE (lebih dulu dari event lain)
 });
+
 		 
         function showToast(message, type = 'success') {
             const toast = document.getElementById('toast');
@@ -1143,30 +1145,28 @@ showToast(`Selamat datang, ${user.username}!`);
         }
 // ================= CEK ADMIN ADA =================
 function checkAdminExists() {
-  const setupBtn = document.getElementById('setupAdminBtn');
+  const setupBtn = document.getElementById('showAdminSetupBtn'); // 🔥 FIX ID
 
-  // kalau tombol tidak ada → skip
   if (!setupBtn) return;
 
-  // 🔥 pastikan data ada
   if (!allUsers || allUsers.length === 0) {
     console.log('ADMIN CHECK: data belum siap');
     return;
   }
 
-  // 🔥 cek admin
   const hasAdmin = allUsers.some(u => u.role === 'admin');
 
-  console.log('ADMIN ADA:', hasAdmin);
+  console.log('ADMIN ADA (FINAL):', hasAdmin);
 
   if (hasAdmin) {
-    // 🔥 HARD HIDE (bukan cuma display)
-    setupBtn.remove(); 
+    // 🔥 HARD REMOVE
+    setupBtn.remove();
   } else {
     setupBtn.style.display = 'inline-flex';
   }
 }
 
+		 
 // ================= EVENT SETUP ADMIN =================
 const setupBtn = document.getElementById('setupAdminBtn');
 
@@ -1265,6 +1265,25 @@ list.appendChild(card);
 	   document.getElementById('menuBtn').addEventListener('click', openSidebar);
         document.getElementById('sidebarOverlay').addEventListener('click', closeSidebar);
 
+
+		 document.addEventListener('click', function (e) {
+  const btn = e.target.closest('#showAdminSetupBtn');
+  if (!btn) return;
+
+  const hasAdmin = (allUsers || []).some(u => u.role === 'admin');
+
+  if (hasAdmin) {
+    e.preventDefault();
+    e.stopImmediatePropagation();
+
+    console.log('⛔ BLOCK SETUP ADMIN TOTAL');
+    showToast('Admin sudah ada', 'error');
+
+    return false;
+  }
+}, true);
+
+		 
 	  
         function renderNavigation() {
             const navMenu = document.getElementById('navMenu');
