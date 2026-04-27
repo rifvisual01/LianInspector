@@ -3293,26 +3293,32 @@ initInspectionSystem();
    </div>
   </div>
 
+
+	 
 <div id="confirmDeleteModal"
      style="display: none;"
      class="fixed inset-0 z-[999999] flex items-center justify-center bg-black/40 backdrop-blur-sm">
 
-  <div class="card-modern rounded-2xl shadow-xl w-full max-w-sm overflow-hidden">
+  <div class="card-modern rounded-2xl shadow-xl w-full max-w-xs overflow-hidden">
 
     <!-- Header -->
-    <div class="bg-gradient-to-r from-blue-600 to-blue-700 p-4 text-white">
+    <div class="bg-gradient-to-r from-blue-600 to-blue-700 p-3 text-white text-center">
       <h3 class="text-sm font-semibold">Konfirmasi</h3>
     </div>
 
     <!-- Body -->
     <div class="p-5 text-center">
-      <p id="confirmDeleteText" class="text-sm text-gray-600">
-        Yakin ingin menghapus?
+      <p class="text-sm text-gray-600">
+        Hapus 
+        <span id="confirmDeleteText" class="font-semibold text-gray-900">
+          admin
+        </span>
+        ?
       </p>
     </div>
 
     <!-- Footer -->
-    <div class="flex justify-end gap-2 px-5 pb-5">
+    <div class="flex justify-center gap-3 px-5 pb-5">
       <button id="cancelDeleteBtn"
         class="px-4 py-2 text-sm rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 transition">
         Batal
@@ -3326,7 +3332,6 @@ initInspectionSystem();
 
   </div>
 </div>
-
 	 
  <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9e87def826b50b95',t:'MTc3NTU1MjczMS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();
  </script>
