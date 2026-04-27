@@ -1108,21 +1108,24 @@ showToast(`Selamat datang, ${user.username}!`);
 // ================= CEK ADMIN ADA =================
 function checkAdminExists() {
     const setupBtn = document.getElementById('setupAdminBtn');
-
     if (!setupBtn) return;
+
+    // 🔥 kalau data belum ada → jangan ambil keputusan dulu
+    if (!allUsers || allUsers.length === 0) {
+        console.log('⏳ Users belum siap');
+        return;
+    }
 
     const hasAdmin = allUsers.some(u => u.role === 'admin');
 
-    // 🔥 kalau admin sudah ada → hilangkan tombol
+    console.log('ADMIN ADA:', hasAdmin, allUsers);
+
     if (hasAdmin) {
         setupBtn.style.display = 'none';
     } else {
         setupBtn.style.display = 'block';
     }
-
-    console.log('ADMIN ADA:', hasAdmin);
 }
-
 
 // ================= EVENT SETUP ADMIN =================
 const setupBtn = document.getElementById('setupAdminBtn');
