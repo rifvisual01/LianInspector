@@ -947,7 +947,6 @@ function getTable(type) {
   const { data: categories } = await supabaseClient.from('categories').select('*');
   const { data: items } = await supabaseClient.from('items').select('*');
   const { data: inspections } = await supabaseClient.from('inspections').select('*');
-			const { data: inspections } = await supabaseClient.from('inspections').select('*');
 
 // 🔥 WAJIB TAMBAH INI
 allInspections = (inspections || []).map(i => ({
