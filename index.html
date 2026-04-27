@@ -2076,67 +2076,89 @@ let isAdminEditMode = false;
     });
 
     // ================= SIMPAN =================
-    saveBtn?.addEventListener('click', async () => {
-        console.log('💾 SIMPAN');
+document.getElementById('saveStaffBtn')?.addEventListener('click', async () => {
+    console.log('💾 SIMPAN DIKLIK');
 
-        const username = document.getElementById('staffUsername').value.trim();
-        const password = document.getElementById('staffPassword').value.trim();
-        const role = document.getElementById('staffRole').value;
+    const button = document.getElementById('saveStaffBtn');
+    const username = document.getElementById('staffUsername').value.trim();
+    const password = document.getElementById('staffPassword').value.trim();
+    const role = document.getElementById('staffRole').value;
 
-        if (!username || !password) {
-            showToast('Username dan password wajib diisi', 'error');
-            return;
-        }
+    if (!username || !password) {
+        showToast('Username dan password wajib diisi', 'error');
+        return;
+    }
 
-        setButtonLoading(saveBtn, true);
+    setButtonLoading(button, true);
 
-        try {
-            // 🔥 deteksi mode (anti error PATCH liar)
-            const isEditMode =
-                currentEditingStaffId &&
-                typeof currentEditingStaffId === 'string' &&
-                currentEditingStaffId.length > 10;
+    try {
 
-            if (isEditMode) {
-                // ================= UPDATE =================
-                const { error } = await supabaseClient
-                    .from('users')
-                    .update({ username, password, role })
-                    .eq('id', currentEditingStaffId);
+        // 🔥 VALIDASI MODE EDIT (WAJIB UUID)
+        const isEdit =
+            currentEditingStaffId &&
+            typeof currentEditingStaffId === 'string' &&
+            currentEditingStaffId.includes('-'); // UUID pasti ada "-"
 
-                if (error) throw error;
+        if (isEdit) {
+            console.log('MODE: EDIT', currentEditingStaffId);
 
-                showToast('✓ Staff berhasil diperbarui!');
+            const { error } = await supabaseClient
+                .from('users')
+                .update({
+                    username,
+                    password,
+                    role
+                })
+                .eq('id', currentEditingStaffId);
 
-            } else {
-                // ================= CREATE =================
-                const { error } = await supabaseClient
-                    .from('users')
-                    .insert([{ username, password, role }]);
-
-                if (error) throw error;
-
-                showToast('✓ Staff berhasil ditambahkan!');
+            if (error) {
+                console.error('UPDATE ERROR:', error);
+                showToast('Gagal memperbarui staff', 'error');
+                return;
             }
 
-            // ================= SUCCESS =================
-            document.getElementById('staffModal').style.display = 'none';
+            showToast('✓ Staff berhasil diperbarui!');
 
-            currentEditingStaffId = null;
-            isAdminEditMode = false;
+        } else {
+            console.log('MODE: CREATE');
 
-            await loadInitialData();
-            renderStaff();
+            const { error } = await supabaseClient
+                .from('users')
+                .insert([
+                    {
+                        username,
+                        password,
+                        role
+                    }
+                ]);
 
-        } catch (err) {
-            console.error(err);
-            showToast('Terjadi kesalahan', 'error');
+            if (error) {
+                console.error('INSERT ERROR:', error);
+                showToast('Gagal menambahkan staff', 'error');
+                return;
+            }
+
+            showToast('✓ Staff berhasil ditambahkan!');
         }
 
-        // reset tombol (WAJIB)
-        setButtonLoading(saveBtn, false);
-    });
+        // ================= SUCCESS =================
+        const modal = document.getElementById('staffModal');
+        if (modal) modal.style.display = 'none';
 
+        currentEditingStaffId = null;
+        isAdminEditMode = false;
+
+        await loadInitialData();
+        renderStaff();
+
+    } catch (err) {
+        console.error('FATAL ERROR:', err);
+        showToast('Terjadi kesalahan', 'error');
+    }
+
+    // 🔥 WAJIB reset tombol apapun hasilnya
+    setButtonLoading(button, false);
+});
 })();
 
       function renderStaff() {
