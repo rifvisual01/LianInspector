@@ -3383,40 +3383,51 @@ function initStaffModalButtons() {
 
   if (saveBtn) {
     saveBtn.onclick = async () => {
-      console.log('💾 SIMPAN DIKLIK');
+  console.log('💾 SIMPAN DIKLIK');
 
-      const username = document.getElementById('staffUsername').value;
-      const password = document.getElementById('staffPassword').value;
-      const role = document.getElementById('staffRole').value;
+  const button = saveBtn;
 
-      if (!username) {
-        showToast('Username wajib diisi', 'error');
-        return;
-      }
+  const username = document.getElementById('staffUsername').value;
+  const password = document.getElementById('staffPassword').value;
+  const role = document.getElementById('staffRole').value;
 
-      const { error } = await supabaseClient
-        .from('users')
-        .update({
-          username,
-          password,
-          role
-        })
-        .eq('id', currentEditingStaffId);
+  if (!username) {
+    showToast('Username wajib diisi', 'error');
+    return;
+  }
 
-      if (error) {
-        console.error(error);
-        showToast('Gagal update user', 'error');
-        return;
-      }
+  // 🔥 START LOADING
+  setButtonLoading(button, true);
 
-      showToast('✓ User berhasil diupdate');
+  try {
+    const { error } = await supabaseClient
+      .from('users')
+      .update({
+        username,
+        password,
+        role
+      })
+      .eq('id', currentEditingStaffId);
 
-      document.getElementById('staffModal').style.display = 'none';
-      currentEditingStaffId = null;
+    if (error) {
+      console.error(error);
+      showToast('Gagal update user', 'error');
+      return;
+    }
 
-      await loadInitialData();
-      renderStaff();
-    };
+    showToast('✓ User berhasil diupdate');
+
+    document.getElementById('staffModal').style.display = 'none';
+    currentEditingStaffId = null;
+
+    await loadInitialData();
+    renderStaff();
+
+  } finally {
+    // 🔥 WAJIB: BALIKIN TOMBOL
+    setButtonLoading(button, false);
+  }
+};
   }
 }
 
