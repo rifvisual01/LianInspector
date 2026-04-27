@@ -2016,147 +2016,128 @@ list.appendChild(card);
             }
         };
 
-        let currentEditingStaffId = null;
+let currentEditingStaffId = null;
 let isAdminEditMode = false;
 
-// ================= TAMBAH STAFF =================
-document.getElementById('addStaffBtn')?.addEventListener('click', () => {
-    console.log('➕ TAMBAH STAFF DIKLIK');
+// ================= INIT BUTTON (ANTI DOUBLE EVENT) =================
+(function initStaffButtons() {
 
-    currentEditingStaffId = null;
-    isAdminEditMode = false;
+    const addBtn = document.getElementById('addStaffBtn');
+    const cancelBtn = document.getElementById('cancelStaffBtn');
+    const saveBtnOld = document.getElementById('saveStaffBtn');
 
-    // reset form
-    document.getElementById('staffUsername').value = '';
-    document.getElementById('staffPassword').value = '';
-    document.getElementById('staffRole').value = 'inspector';
+    // 🔥 hapus semua event lama (PENTING BANGET)
+    let saveBtn = saveBtnOld;
+    if (saveBtnOld) {
+        const newBtn = saveBtnOld.cloneNode(true);
+        saveBtnOld.parentNode.replaceChild(newBtn, saveBtnOld);
+        saveBtn = newBtn;
+    }
 
-    const roleContainer = document.getElementById('staffRoleContainer');
-if (roleContainer) {
-    roleContainer.classList.remove('hidden');
-}
+    // ================= TAMBAH STAFF =================
+    addBtn?.addEventListener('click', () => {
+        console.log('➕ TAMBAH STAFF');
 
-    document.getElementById('staffUsername').disabled = false;
-    document.getElementById('staffPassword').disabled = false;
-    document.getElementById('staffRole').disabled = false;
+        currentEditingStaffId = null;
+        isAdminEditMode = false;
 
-    document.getElementById('staffModalTitle').textContent = 'Tambah Staff Baru';
+        document.getElementById('staffUsername').value = '';
+        document.getElementById('staffPassword').value = '';
+        document.getElementById('staffRole').value = 'inspector';
 
-    // 🔥 FIX: pakai display, bukan hidden
-    const modal = document.getElementById('staffModal');
-    modal.style.display = 'flex';
+        const roleContainer = document.getElementById('staffRoleContainer');
+        if (roleContainer) roleContainer.classList.remove('hidden');
 
-    // 🔥 reset tombol kalau sebelumnya "Memproses..."
-    const saveBtn = document.getElementById('saveStaffBtn');
-    if (saveBtn) {
+        document.getElementById('staffUsername').disabled = false;
+        document.getElementById('staffPassword').disabled = false;
+        document.getElementById('staffRole').disabled = false;
+
+        document.getElementById('staffModalTitle').textContent = 'Tambah Staff Baru';
+
+        const modal = document.getElementById('staffModal');
+        modal.style.display = 'flex';
+
+        // reset tombol
         saveBtn.disabled = false;
         saveBtn.textContent = 'Simpan';
-    }
-});
+    });
 
-// ================= BATAL =================
-document.getElementById('cancelStaffBtn')?.addEventListener('click', () => {
-    console.log('❎ BATAL DIKLIK');
+    // ================= BATAL =================
+    cancelBtn?.addEventListener('click', () => {
+        console.log('❎ BATAL');
 
-    document.getElementById('staffModal').style.display = 'none';
-
-    currentEditingStaffId = null;
-    isAdminEditMode = false;
-
-    // reset tombol juga
-    const saveBtn = document.getElementById('saveStaffBtn');
-    if (saveBtn) {
-        saveBtn.disabled = false;
-        saveBtn.textContent = 'Simpan';
-    }
-});
-
-// ================= SIMPAN =================
-document.getElementById('saveStaffBtn')?.addEventListener('click', async () => {
-    console.log('💾 SIMPAN DIKLIK');
-
-    const button = document.getElementById('saveStaffBtn');
-    const username = document.getElementById('staffUsername').value.trim();
-    const password = document.getElementById('staffPassword').value.trim();
-    const role = document.getElementById('staffRole').value;
-
-    if (!username || !password) {
-        showToast('Username dan password wajib diisi', 'error');
-        return;
-    }
-
-    setButtonLoading(button, true);
-
-    try {
-
-        // ================= UPDATE / CREATE =================
-
-// deteksi mode yang aman (biar tidak nyelip ke UPDATE)
-const isEditMode =
-  currentEditingStaffId &&
-  typeof currentEditingStaffId === 'string' &&
-  currentEditingStaffId.length > 10;
-
-if (isEditMode) {
-    // ================= UPDATE =================
-    const { error } = await supabaseClient
-        .from('users')
-        .update({
-            username,
-            password,
-            role
-        })
-        .eq('id', currentEditingStaffId);
-
-    if (error) {
-        console.error(error);
-        showToast('Gagal memperbarui staff', 'error');
-        return;
-    }
-
-    showToast('✓ Staff berhasil diperbarui!');
-
-} else {
-    // ================= CREATE =================
-    const { error } = await supabaseClient
-        .from('users')
-        .insert([
-            {
-                username,
-                password,
-                role
-            }
-        ]);
-
-    if (error) {
-        console.error(error);
-        showToast('Gagal menambahkan staff', 'error');
-        return;
-    }
-
-    showToast('✓ Staff berhasil ditambahkan!');
-}
-
-// reset state (penting)
-currentEditingStaffId = null;
-        // ================= SUCCESS =================
         document.getElementById('staffModal').style.display = 'none';
 
         currentEditingStaffId = null;
         isAdminEditMode = false;
 
-        await loadInitialData();
-        renderStaff();
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Simpan';
+    });
 
-    } catch (err) {
-        console.error(err);
-        showToast('Terjadi kesalahan', 'error');
-    }
+    // ================= SIMPAN =================
+    saveBtn?.addEventListener('click', async () => {
+        console.log('💾 SIMPAN');
 
-    // 🔥 WAJIB: reset tombol
-    setButtonLoading(button, false);
-});
-		 
+        const username = document.getElementById('staffUsername').value.trim();
+        const password = document.getElementById('staffPassword').value.trim();
+        const role = document.getElementById('staffRole').value;
+
+        if (!username || !password) {
+            showToast('Username dan password wajib diisi', 'error');
+            return;
+        }
+
+        setButtonLoading(saveBtn, true);
+
+        try {
+            // 🔥 deteksi mode (anti error PATCH liar)
+            const isEditMode =
+                currentEditingStaffId &&
+                typeof currentEditingStaffId === 'string' &&
+                currentEditingStaffId.length > 10;
+
+            if (isEditMode) {
+                // ================= UPDATE =================
+                const { error } = await supabaseClient
+                    .from('users')
+                    .update({ username, password, role })
+                    .eq('id', currentEditingStaffId);
+
+                if (error) throw error;
+
+                showToast('✓ Staff berhasil diperbarui!');
+
+            } else {
+                // ================= CREATE =================
+                const { error } = await supabaseClient
+                    .from('users')
+                    .insert([{ username, password, role }]);
+
+                if (error) throw error;
+
+                showToast('✓ Staff berhasil ditambahkan!');
+            }
+
+            // ================= SUCCESS =================
+            document.getElementById('staffModal').style.display = 'none';
+
+            currentEditingStaffId = null;
+            isAdminEditMode = false;
+
+            await loadInitialData();
+            renderStaff();
+
+        } catch (err) {
+            console.error(err);
+            showToast('Terjadi kesalahan', 'error');
+        }
+
+        // reset tombol (WAJIB)
+        setButtonLoading(saveBtn, false);
+    });
+
+})();
 
       function renderStaff() {
     const list = document.getElementById('staffList');
