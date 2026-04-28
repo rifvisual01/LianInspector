@@ -1122,22 +1122,19 @@ renderInspectionHistory();
   password: password,
   role: 'admin'
 };
-
-            console.log('📝 Creating admin with data:', newAdmin);
-            .dataSdk.create(newAdmin);
-            setButtonLoading(button, false);
             
-            if (result.isOk) {
-                console.log('✅ Admin created successfully');
-                showToast('✓ Akun admin berhasil dibuat! Silakan login.');
-                document.getElementById('adminSetupForm').classList.add('hidden');
-                document.getElementById('setupOrLogin').classList.remove('hidden');
-                document.getElementById('adminUsername').value = '';
-                document.getElementById('adminPassword').value = '';
-            } else {
-                console.error('❌ Admin creation failed:', result.error);
-                showToast('Gagal membuat akun admin', 'error');
-            }
+            if (error) {
+    console.error('❌ Admin creation failed:', error);
+    showToast('Gagal membuat akun admin', 'error');
+} else {
+    console.log('✅ Admin created successfully');
+    showToast('✓ Akun admin berhasil dibuat! Silakan login.');
+
+    document.getElementById('adminSetupForm').classList.add('hidden');
+    document.getElementById('setupOrLogin').classList.remove('hidden');
+    document.getElementById('adminUsername').value = '';
+    document.getElementById('adminPassword').value = '';
+}
         });
 
         document.getElementById('loginBtn')?.addEventListener('click', async () => {
