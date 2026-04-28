@@ -1041,8 +1041,8 @@ renderInspectionHistory();
     {
       name: name,
       category: category,
-      critical_level: priority, // ✅ mapping ke field yang benar
-      damage_types: damageTypes.join(','), // ✅ array → string
+      critical_level: priority,
+      damage_types: damageTypes, // ✅ LANGSUNG ARRAY
       created_at: new Date().toISOString()
     }
   ]);
