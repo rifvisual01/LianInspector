@@ -1729,12 +1729,12 @@ list.appendChild(card);
             }
 
             if (!categoryInput) {
-                showToast('Kategori wajib dipilih atau dibuat', 'error');
-                return;
-            }
+    showToast('Kategori wajib dipilih atau dibuat', 'error');
+    return;
+}
 
-            setButtonLoading(button, true);
-            }
+setButtonLoading(button, true);
+            
 
             if (currentEditingItemId) {
                 // Update existing item
@@ -1744,24 +1744,34 @@ list.appendChild(card);
                     const updatedItem = {
                         ...itemToUpdate,
                         itemName,
-                        categoryId,
-                        damageTypeId: damageList.join(',') || '',
+                       category: categoryInput,
+damage_types: damageList,
                         criticalLevel
                     };
                     
-                    console.log('📤 Sending update:', updatedItem);
-                    const result = await window.dataSdk.update(updatedItem);
-                    setButtonLoading(button, false);
-                    
-                    if (result.isOk) {
-                        console.log('✓ Item updated successfully');
-                        document.getElementById('itemModal').classList.add('hidden');
-                        currentEditingItemId = null;
-                        showToast('✓ Item berhasil diperbarui!');
-                    } else {
-                        console.error('❌ Update failed:', result.error);
-                        showToast('Gagal memperbarui item', 'error');
-                    }
+                   console.log('📤 Updating item to Supabase...');
+
+const { error } = await supabaseClient
+  .from('items')
+  .update({
+    name: itemName,
+    category: categoryInput,
+    critical_level: criticalLevel,
+    damage_types: damageList
+  })
+  .eq('id', currentEditingItemId);
+
+setButtonLoading(button, false);
+
+if (error) {
+    console.error('❌ Update failed:', error);
+    showToast('Gagal memperbarui item', 'error');
+} else {
+    console.log('✓ Item updated successfully');
+    document.getElementById('itemModal').classList.add('hidden');
+    currentEditingItemId = null;
+    showToast('✓ Item berhasil diperbarui!');
+}
                 }
             } else {
   
