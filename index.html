@@ -1041,8 +1041,8 @@ renderInspectionHistory();
     {
       name: name,
       category: category,
-      critical_level: priority,
-      damage_types: damageTypes, // ✅ LANGSUNG ARRAY
+      critical_level: priority, // ✅ mapping benar
+      damage_types: damageTypes, // ✅ array langsung
       created_at: new Date().toISOString()
     }
   ]);
