@@ -1036,16 +1036,16 @@ renderInspectionHistory();
 
   try {
     const { error } = await supabaseClient
-      .from('items')
-      .insert([
-        {
-          name: name,
-          category: category,
-          priority: priority,
-          damage_types: damageTypes, // ✅ ARRAY (PENTING)
-          created_at: new Date().toISOString()
-        }
-      ]);
+  .from('items')
+  .insert([
+    {
+      name: name,
+      category: category,
+      critical_level: priority, // ✅ mapping ke field yang benar
+      damage_types: damageTypes.join(','), // ✅ array → string
+      created_at: new Date().toISOString()
+    }
+  ]);
 
     if (error) throw error;
 
