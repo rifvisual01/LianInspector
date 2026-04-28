@@ -1124,7 +1124,7 @@ renderInspectionHistory();
 };
 
             console.log('📝 Creating admin with data:', newAdmin);
-            const result = await window.dataSdk.create(newAdmin);
+            .dataSdk.create(newAdmin);
             setButtonLoading(button, false);
             
             if (result.isOk) {
@@ -1737,27 +1737,6 @@ list.appendChild(card);
             }
 
             setButtonLoading(button, true);
-
-            let categoryId = document.getElementById('itemCategory').dataset.categoryId;
-            if (!categoryId) {
-                const newCategory = {
-                    type: 'sheet_categories',
-                    id: 'cat_' + Date.now(),
-                    categoryId: 'cat_' + Date.now(),
-                    categoryName: categoryInput,
-                    createdAt: new Date().toISOString()
-                };
-                
-                console.log('📝 Creating new category:', newCategory);
-                const catResult = await window.dataSdk.create(newCategory);
-                if (!catResult.isOk) {
-                    console.error('❌ Category creation failed:', catResult.error);
-                    showToast('Gagal membuat kategori', 'error');
-                    setButtonLoading(button, false);
-                    return;
-                }
-                categoryId = newCategory.categoryId;
-                console.log('✓ Category created with ID:', categoryId);
             }
 
             if (currentEditingItemId) {
@@ -1788,30 +1767,30 @@ list.appendChild(card);
                     }
                 }
             } else {
-                // Create new item
-                const newItem = {
-                    type: 'sheet_items',
-                    id: 'item_' + Date.now(),
-                    itemId: 'item_' + Date.now(),
-                    itemName,
-                    categoryId,
-                    damageTypeId: damageList.join(',') || '',
-                    criticalLevel,
-                    createdAt: new Date().toISOString()
-                };
+  
+                // 🔥 CREATE ITEM KE SUPABASE (FIX FINAL)
+const { error } = await supabaseClient
+  .from('items')
+  .insert([
+    {
+      name: itemName,
+      category: categoryInput,
+      critical_level: criticalLevel,
+      damage_types: damageList, // ✅ ARRAY langsung
+      created_at: new Date().toISOString()
+    }
+  ]);
 
-                console.log('📝 Creating new item:', newItem);
-                const result = await window.dataSdk.create(newItem);
-                setButtonLoading(button, false);
-                
-                if (result.isOk) {
-                    console.log('✓ Item created successfully');
-                    document.getElementById('itemModal').classList.add('hidden');
-                    showToast('✓ Item berhasil ditambahkan!');
-                } else {
-                    console.error('❌ Create failed:', result.error);
-                    showToast('Gagal menambahkan item', 'error');
-                }
+setButtonLoading(button, false);
+
+if (error) {
+  console.error('❌ Insert error:', error);
+  showToast('Gagal menambahkan item', 'error');
+} else {
+  console.log('✓ Item created successfully');
+  document.getElementById('itemModal').classList.add('hidden');
+  showToast('✓ Item berhasil ditambahkan!');
+}
             }
         });
 
@@ -3117,7 +3096,7 @@ modal.style.zIndex = '9999999'; // 🔥 naikkan layer
             
             try {
                 console.log('[3] Calling window.dataSdk.create()...');
-                const result = await window.dataSdk.create(record);
+                .dataSdk.create(record);
                 console.log('[4] dataSdk.create() returned:', result);
                 
                 if (result.isOk) {
