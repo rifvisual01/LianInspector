@@ -760,7 +760,7 @@
         </div>
 		   
 		   <!-- Critical Level -->
-        <div class="group mt-4"><label class="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide">Tingkat Prioritas</label> <select id="itemCriticalLevel" class="w-full px-3 py-2 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-sm font-semibold bg-gray-50 hover:bg-white transition-all cursor-pointer"> <option value="Low">🟢 Rendah</option> <option value="Medium">🟡 Sedang</option> <option value="High">🟠 Tinggi</option> <option value="Critical">🔴 Kritis</option> </select>
+        <div class="group mt-4"><label class="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide">Tingkat Prioritas</label> <select id="item.criticalLevel" class="w-full px-3 py-2 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-sm font-semibold bg-gray-50 hover:bg-white transition-all cursor-pointer"> <option value="Low">🟢 Rendah</option> <option value="Medium">🟡 Sedang</option> <option value="High">🟠 Tinggi</option> <option value="Critical">🔴 Kritis</option> </select>
         </div>
 		   
 		   <!-- Damage Types -->
@@ -1361,7 +1361,7 @@ list.appendChild(card);
         function updateDashboard() {
             document.getElementById('totalUsers').textContent = sheetUsers.length;
             document.getElementById('totalCategories').textContent = sheetCategories.length;
-            document.getElementById('totalItems').textContent = sheetItems.length;
+            document.getElementById('totalItems').textContent = allItems.length;
             document.getElementById('totalInspections').textContent = sheetInspections.length;
             
             // Update user role display
@@ -1497,7 +1497,7 @@ list.appendChild(card);
                 btn.innerHTML = `
                     <i data-lucide="tag" style="width: 16px; height: 16px; color: #7c3aed;"></i>
                     ${cat.categoryName}
-                    <span class="ml-auto text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">${sheetItems.filter(i => i.categoryId === cat.categoryId).length}</span>
+                    <span class="ml-auto text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">${allItems.filter(i => i.categoryId === cat.categoryId).length}</span>
                 `;
                 btn.addEventListener('click', () => {
                     filterByCategory(cat.categoryId);
@@ -1712,7 +1712,7 @@ setButtonLoading(button, true);
             if (currentEditingItemId) {
                 // Update existing item
                 console.log('✏️ Updating item:', currentEditingItemId);
-                const itemToUpdate = sheetItems.find(i => i.__backendId === currentEditingItemId);
+                const itemToUpdate = allItems.find(i => i.__backendId === currentEditingItemId);
                 if (itemToUpdate) {
                     const updatedItem = {
                         ...itemToUpdate,
@@ -1785,7 +1785,7 @@ if (error) {
             }
 
             list.innerHTML = '';
-            let itemsToDisplay = sheetItems || [];
+            let itemsToDisplay = allItems || [];
             
             if (selectedCategoryFilter) {
                 itemsToDisplay = itemsToDisplay.filter(i => i.categoryId === selectedCategoryFilter);
@@ -1807,8 +1807,8 @@ if (error) {
             // Apply search filter - matches partial text in name or category
             if (currentSearchQuery) {
                 itemsToDisplay = itemsToDisplay.filter(item => {
-                    const itemName = item.itemName.toLowerCase();
-                    const cat = sheetCategories.find(c => c.categoryId === item.categoryId);
+                    const itemName = item.name.toLowerCase();
+                    const cat = sheetCategories.find(c => c.categoryId === item.category);
                     const categoryName = cat?.categoryName.toLowerCase() || '';
                     
                     return itemName.includes(currentSearchQuery) || categoryName.includes(currentSearchQuery);
@@ -1821,13 +1821,15 @@ if (error) {
             }
 
             itemsToDisplay.forEach(item => {
-                const damages = item.damageTypeId ? item.damageTypeId.split(',').filter(d => d) : [];
-                const cat = sheetCategories.find(c => c.categoryId === item.categoryId);
+                const damages = Array.isArray(item.damage_types)
+  ? item.damage_types
+  : [];
+                const cat = sheetCategories.find(c => c.categoryId === item.category);
                 
                 let criticalEmoji = '🟢';
-                if (item.criticalLevel === 'Medium') criticalEmoji = '🟡';
-                else if (item.criticalLevel === 'High') criticalEmoji = '🟠';
-                else if (item.criticalLevel === 'Critical') criticalEmoji = '🔴';
+                if (item.critical_level === 'Medium') criticalEmoji = '🟡';
+                else if (item.critical_level === 'High') criticalEmoji = '🟠';
+                else if (item.critical_level === 'Critical') criticalEmoji = '🔴';
                 
                 const card = document.createElement('div');
                 card.className = 'card-modern rounded-lg shadow-sm hover:shadow-md transition-all border border-gray-200 hover:border-blue-300 overflow-hidden';
@@ -1836,8 +1838,8 @@ if (error) {
                     <div class="bg-gradient-to-r from-blue-50 to-cyan-50 p-3 border-b border-gray-200">
                         <div class="flex items-start justify-between gap-3">
                             <div class="flex-1 min-w-0">
-                                <h3 class="font-bold text-gray-900 text-sm truncate">${item.itemName}</h3>
-                                <p class="text-xs text-gray-600 truncate">📁 ${cat?.categoryName || 'Unknown'}</p>
+                                <h3 class="font-bold text-gray-900 text-sm truncate">${item.name}</h3>
+                                <p class="text-xs text-gray-600 truncate">📁 ${item.category || 'No Category'}</p>
                             </div>
                             <div class="flex items-center gap-2 flex-shrink-0">
                                 <span class="text-lg">${criticalEmoji}</span>
@@ -1905,19 +1907,21 @@ if (error) {
         }
 
         window.editItem = (id) => {
-            const item = sheetItems.find(i => i.__backendId === id);
+            const item = allItems.find(i => i.__backendId === id);
             if (item) {
                 currentEditingItemId = id;
-                document.getElementById('itemName').value = item.itemName;
-                document.getElementById('itemCriticalLevel').value = item.criticalLevel;
+                document.getElementById('itemName').value = item.name;
+                document.getElementById('itemCriticalLevel').value = item.critical_level;
                 
-                const cat = sheetCategories.find(c => c.categoryId === item.categoryId);
+                const cat = sheetCategories.find(c => c.categoryId === item.category);
                 document.getElementById('itemCategory').value = cat?.categoryName || '';
-                document.getElementById('itemCategory').dataset.categoryId = item.categoryId;
+                document.getElementById('itemCategory').dataset.categoryId = item.category;
                 
                 // Load damages
                 document.getElementById('damageList').innerHTML = '';
-                const damages = item.damageTypeId ? item.damageTypeId.split(',').filter(d => d) : [];
+                const damages = Array.isArray(item.damage_types)
+  ? item.damage_types
+  : [];
                 if (damages.length > 0) {
                     document.getElementById('damageList').classList.remove('hidden');
                     document.getElementById('damageList').removeAttribute('data-empty');
@@ -2013,8 +2017,8 @@ if (error) {
             }
 
             sheetCategories.forEach(cat => {
-                const itemsInCat = sheetItems.filter(i => i.categoryId === cat.categoryId).length;
-                const categoryItemsInCat = sheetItems.filter(i => i.categoryId === cat.categoryId);
+                const itemsInCat = allItems.filter(i => i.categoryId === cat.categoryId).length;
+                const categoryItemsInCat = allItems.filter(i => i.categoryId === cat.categoryId);
                 
                 const card = document.createElement('div');
                 card.className = 'card-modern rounded-lg shadow-sm hover:shadow-md transition-all border border-gray-100 hover:border-blue-300 overflow-hidden';
@@ -2036,7 +2040,7 @@ if (error) {
                                 ${categoryItemsInCat.map(item => `
                                     <p class="text-xs text-gray-700 flex items-center gap-2 p-1 hover:bg-blue-50 rounded transition-all">
                                         <span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
-                                        ${item.itemName}
+                                        ${item.name}
                                     </p>
                                 `).join('')}
                             </div>
@@ -2077,7 +2081,7 @@ if (error) {
                 return;
             }
 
-            const itemsInCat = sheetItems.filter(i => i.categoryId === cat.categoryId).length;
+            const itemsInCat = allItems.filter(i => i.categoryId === cat.categoryId).length;
             
             if (itemsInCat > 0) {
                 showToast(`❌ Tidak bisa hapus! Ada ${itemsInCat} item dalam kategori ini.`, 'error');
@@ -2530,7 +2534,7 @@ modal.style.zIndex = '9999999'; // 🔥 naikkan layer
         function startNewInspection() {
             console.log('📋 Starting new inspection...');
             
-            if (!sheetItems || sheetItems.length === 0) {
+            if (!allItems || allItems.length === 0) {
                 showToast('⚠️ Belum ada item inspeksi', 'error');
                 return;
             }
@@ -2687,7 +2691,7 @@ modal.style.zIndex = '9999999'; // 🔥 naikkan layer
             
             const categories = [];
             allCategories.forEach(cat => {
-                const itemsInCat = allItems.filter(item => item.categoryId === cat.categoryId);
+                const itemsInCat = allItems.filter(item => item.category === cat.categoryId);
                 if (itemsInCat.length > 0) {
                     categories.push({ category: cat, items: itemsInCat });
                 }
@@ -2750,8 +2754,8 @@ modal.style.zIndex = '9999999'; // 🔥 naikkan layer
             const title = document.createElement('div');
             title.className = 'flex-1';
             title.innerHTML = `
-                <p class="font-bold text-sm text-gray-900">${item.itemName}</p>
-                <p class="text-xs text-gray-600 mt-1">Kritis: ${item.criticalLevel || 'Low'}</p>
+                <p class="font-bold text-sm text-gray-900">${item.name}</p>
+                <p class="text-xs text-gray-600 mt-1">Kritis: ${item.critical_level || 'Low'}</p>
             `;
             
             const buttons = document.createElement('div');
@@ -2788,8 +2792,10 @@ modal.style.zIndex = '9999999'; // 🔥 naikkan layer
             wrapper.appendChild(card);
             
             if (itemStatus) {
-                const rawDamageStr = String(item.damageTypeId || '').trim();
-                const damages = rawDamageStr.split(',').map(d => d.trim()).filter(d => d.length > 0);
+                const rawDamageStr = String(item.damage_types || '').trim();
+                const damages = Array.isArray(item.damage_types)
+  ? item.damage_types
+  : [];
                 
                 const dropdownContainer = document.createElement('div');
                 dropdownContainer.className = 'ml-2 mt-3 space-y-3 p-4 bg-gradient-to-br from-blue-50 to-cyan-50 border-2 border-blue-300 rounded-lg';
@@ -3401,7 +3407,7 @@ modal.style.zIndex = '9999999'; // 🔥 naikkan layer
             
             const categoryMap = new Map();
             allCategories.forEach(cat => {
-                const itemsInCat = allItems.filter(item => item.categoryId === cat.categoryId);
+                const itemsInCat = allItems.filter(item => item.category === cat.categoryId);
                 if (itemsInCat.length > 0) {
                     categoryMap.set(cat.categoryId, { category: cat, items: itemsInCat });
                 }
@@ -3430,8 +3436,8 @@ modal.style.zIndex = '9999999'; // 🔥 naikkan layer
                     <div style="background: white; border-bottom: 1px solid #e5e7eb; padding: 12px; display: flex; flex-direction: column; gap: 8px;">
                         <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;">
                             <div style="flex: 1;">
-                                <p style="font-weight: 700; color: #111827; font-size: 12px;">${item.itemName}</p>
-                                <p style="font-size: 12px; color: #4b5563;">Kritis: ${item.criticalLevel || 'Rendah'}</p>
+                                <p style="font-weight: 700; color: #111827; font-size: 12px;">${item.name}</p>
+                                <p style="font-size: 12px; color: #4b5563;">Kritis: ${item.critical_level || 'Rendah'}</p>
                             </div>
                             <div style="background-color: ${statusInfo.bg}; color: ${statusInfo.color}; text-align: center; padding: 4px 8px; border-radius: 4px; font-weight: 700; font-size: 12px; white-space: nowrap;">
                                 ${statusInfo.emoji}
