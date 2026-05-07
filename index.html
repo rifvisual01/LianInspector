@@ -885,45 +885,65 @@ console.log("✅ Supabase client:", supabaseClient);
         };
 
 		window.dataSdk = {
-  async create(data) {
-    const table = 'users';
 
-    const { data: result, error } = await supabaseClient
+  async create(table, payload) {
+    const { data, error } = await supabaseClient
       .from(table)
-      .insert([data])
+      .insert([payload])
       .select();
 
-    return error
-      ? { isOk: false, error }
-      : { isOk: true, data: result[0] };
+    if (error) {
+      console.error("CREATE ERROR:", error);
+      return null;
+    }
+
+    return data;
   },
 
-  async update(data) {
-    const table = getTable(data.type);
-
-    const { error } = await supabaseClient
+  async read(table) {
+    const { data, error } = await supabaseClient
       .from(table)
-      .update(data)
-      .eq('id', data.id);
+      .select("*");
 
-    return error
-      ? { isOk: false, error }
-      : { isOk: true };
+    if (error) {
+      console.error("READ ERROR:", error);
+      return [];
+    }
+
+    return data;
   },
 
-  async delete(data) {
-    const table = getTable(data.type);
+  async update(table, id, payload) {
+    const { data, error } = await supabaseClient
+      .from(table)
+      .update(payload)
+      .eq("id", id)
+      .select();
 
+    if (error) {
+      console.error("UPDATE ERROR:", error);
+      return null;
+    }
+
+    return data;
+  },
+
+  async delete(table, id) {
     const { error } = await supabaseClient
       .from(table)
       .delete()
-      .eq('id', data.id);
+      .eq("id", id);
 
-    return error
-      ? { isOk: false, error }
-      : { isOk: true };
+    if (error) {
+      console.error("DELETE ERROR:", error);
+      return false;
+    }
+
+    return true;
   }
+
 };
+		 
 function getTable(type) {
   const map = {
     user: 'users',
