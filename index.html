@@ -1036,53 +1036,6 @@ renderInspectionHistory();
 }
 
 
-		 document.getElementById('saveItemBtn').addEventListener('click', async () => {
-  const name = document.getElementById('itemName').value.trim();
-  const category = document.getElementById('itemCategory').value.trim();
-  const priority = document.getElementById('itemCriticalLevel').value;
-
-  // 🔥 ambil semua damage dari list
-  const damageTags = document.querySelectorAll('#damageList .damage-tag span:first-child');
-
-  const damageTypes = Array.from(damageTags)
-    .map(el => el.textContent.trim())
-    .filter(v => v !== '');
-
-  // ✅ VALIDASI
-  if (!name) {
-    showToast('Nama item wajib diisi', 'error');
-    return;
-  }
-
-  try {
-    const { error } = await supabaseClient
-  .from('items')
-  .insert([
-    {
-      name: name,
-      category: category,
-      critical_level: priority, // ✅ mapping benar
-      damage_types: damageTypes, // ✅ array langsung
-      created_at: new Date().toISOString()
-    }
-  ]);
-
-    if (error) throw error;
-
-    showToast('Item berhasil ditambahkan', 'success');
-
-    // 🔄 refresh data
-    await loadInitialData();
-
-    // 🔁 balik ke list
-    switchView('itemsView');
-
-  } catch (err) {
-    console.error(err);
-    showToast('Gagal simpan item', 'error');
-  }
-});
-
 		 
         function closeSidebar() {
             document.getElementById('sidebar').classList.add('-translate-x-full');
