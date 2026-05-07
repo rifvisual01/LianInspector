@@ -3113,51 +3113,65 @@ modal.style.zIndex = '9999999'; // 🔥 naikkan layer
         }
 
         async function submitInspectionData(record) {
-            console.log('💾 [1] STARTING: Saving inspection to database...');
-            console.log('[2] Inspection record:', record);
-            const btn = document.getElementById('submitInspectionBtn');
-            const originalHTML = btn.innerHTML;
-            
-            btn.disabled = true;
-            btn.innerHTML = '<div style="display: inline-block; width: 16px; height: 16px; border: 2px solid white; border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite;"></div> <span>Menyimpan...</span>';
-            
-            try {
-                console.log('[3] Calling window.dataSdk.create()...');
-                .dataSdk.create(record);
-                console.log('[4] dataSdk.create() returned:', result);
-                
-                if (result.isOk) {
-                    console.log('✅ [5] SUCCESS: Inspection saved successfully');
-                    console.log('[6] Result data:', result.data);
-                    btn.disabled = false;
-                    btn.innerHTML = originalHTML;
-                    showToast('✓ Inspeksi berhasil disimpan!');
-                    
-                    console.log('[7] Waiting 300ms before showing report...');
-                    setTimeout(() => {
-                        console.log('[8] Calling showReportModal()...');
-                        showReportModal(record);
-                        console.log('[9] showReportModal() completed');
-                    }, 300);
-                } else {
-                    console.error('❌ [ERROR-5] Save failed');
-                    console.error('[6] Error details:', result.error);
-                    console.error('[6a] Error message:', result.error?.message);
-                    console.error('[6b] Full error object:', result.error);
-                    btn.disabled = false;
-                    btn.innerHTML = originalHTML;
-                    showToast('❌ Gagal menyimpan inspeksi: ' + (result.error?.message || 'Unknown error'), 'error');
-                }
-            } catch (error) {
-                console.error('💥 [EXCEPTION] Exception occurred:', error);
-                console.error('[detail] Error message:', error.message);
-                console.error('[detail] Error stack:', error.stack);
-                btn.disabled = false;
-                btn.innerHTML = originalHTML;
-                showToast('❌ Error: ' + error.message, 'error');
-            }
+    console.log('💾 [1] STARTING: Saving inspection to database...');
+    console.log('[2] Inspection record:', record);
+
+    const btn = document.getElementById('submitInspectionBtn');
+    const originalHTML = btn.innerHTML;
+
+    btn.disabled = true;
+
+    btn.innerHTML = `
+      <div style="display:inline-block;width:16px;height:16px;
+      border:2px solid white;border-top-color:transparent;
+      border-radius:50%;animation:spin 0.8s linear infinite;"></div>
+      <span>Menyimpan...</span>
+    `;
+
+    try {
+
+        console.log('[3] Calling window.dataSdk.create()...');
+
+        const result = await window.dataSdk.create(
+            'inspections',
+            record
+        );
+
+        console.log('[4] dataSdk.create() returned:', result);
+
+        if (result) {
+
+            console.log('✅ [5] SUCCESS: Inspection saved successfully');
+
+            btn.disabled = false;
+            btn.innerHTML = originalHTML;
+
+            showToast('✓ Inspeksi berhasil disimpan!');
+
+            setTimeout(() => {
+                showReportModal(record);
+            }, 300);
+
+        } else {
+
+            console.error('❌ Save failed');
+
+            btn.disabled = false;
+            btn.innerHTML = originalHTML;
+
+            showToast('❌ Gagal menyimpan inspeksi', 'error');
         }
 
+    } catch (error) {
+
+        console.error('💥 Exception:', error);
+
+        btn.disabled = false;
+        btn.innerHTML = originalHTML;
+
+        showToast('❌ Error: ' + error.message, 'error');
+    }
+}
         function showReportModal(inspectionRecord) {
             console.log('🎯 Showing report modal for inspection:', inspectionRecord.inspectionId);
             generateAndShowReport(inspectionRecord);
