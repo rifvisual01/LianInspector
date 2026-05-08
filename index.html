@@ -1755,12 +1755,50 @@ if (error) {
             } else {
   
                 // 🔥 CREATE ITEM KE SUPABASE (FIX FINAL)
+				// =============================
+// AUTO CREATE CATEGORY
+// =============================
+
+const cleanCategory = categoryInput.trim().toLowerCase();
+
+const { data: existingCategory, error: categoryCheckError } =
+  await supabaseClient
+    .from('categories')
+    .select('*')
+    .eq('name', cleanCategory)
+    .maybeSingle();
+
+if (categoryCheckError) {
+  console.error('❌ Category check error:', categoryCheckError);
+}
+
+if (!existingCategory && cleanCategory !== '') {
+
+  console.log('➕ Creating new category:', cleanCategory);
+
+  const { error: insertCategoryError } =
+    await supabaseClient
+      .from('categories')
+      .insert([
+        {
+          name: cleanCategory,
+          created_at: new Date().toISOString()
+        }
+      ]);
+
+  if (insertCategoryError) {
+    console.error('❌ Insert category error:', insertCategoryError);
+  } else {
+    console.log('✅ Category created:', cleanCategory);
+  }
+}
+				
 const { error } = await supabaseClient
   .from('items')
   .insert([
     {
       name: itemName,
-      category: categoryInput,
+     category: cleanCategory,
       critical_level: criticalLevel,
       damage_types: damageList, // ✅ ARRAY langsung
       created_at: new Date().toISOString()
