@@ -1844,10 +1844,10 @@ showToast('✓ Item berhasil ditambahkan!');
             const emptyState = document.getElementById('itemsEmptyState');
             const listSection = document.getElementById('itemsListSection');
             
-            if (!list || !emptyState || !listSection) {
-                console.warn('⚠️ renderItems: Missing DOM elements');
-                return;
-            }
+           if (!list || !listSection) {
+    console.warn('⚠️ renderItems: Missing DOM elements');
+    return;
+}
 
             list.innerHTML = '';
             let itemsToDisplay = sheetItems || [];
@@ -1860,17 +1860,30 @@ console.log('itemsToDisplay:', itemsToDisplay);
 }
 
             // Show/hide sections based on whether items exist
-            if (itemsToDisplay.length === 0) {
-                emptyState.classList.remove('hidden');
-                listSection.classList.add('hidden');
-                console.log('📭 No items to display - showing empty state');
-                return;
-            } else {
-                emptyState.classList.add('hidden');
-                listSection.classList.remove('hidden');
-                addSearchInput();
-                console.log(`📊 Displaying ${itemsToDisplay.length} items`);
-            }
+if (itemsToDisplay.length === 0) {
+
+    if (emptyState) {
+        emptyState.classList.remove('hidden');
+    }
+
+    listSection.classList.add('hidden');
+
+    console.log('📭 No items to display - showing empty state');
+    return;
+
+} else {
+
+    if (emptyState) {
+        emptyState.classList.add('hidden');
+    }
+
+    listSection.classList.remove('hidden');
+
+    addSearchInput();
+
+    console.log(`📊 Displaying ${itemsToDisplay.length} items`);
+}
+			
 
             // Apply search filter - matches partial text in name or category
             if (currentSearchQuery) {
