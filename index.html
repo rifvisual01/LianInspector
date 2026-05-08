@@ -1607,6 +1607,10 @@ console.log('📂 total categories:', sheetCategories.length);
             }
         }
 
+		 console.log('🧪 categoryInput element:', categoryInput);
+console.log('🧪 categoryDropdown element:', categoryDropdown);
+console.log('🧪 categoryToggle element:', categoryToggle);
+		 
         categoryInput?.addEventListener('input', function() {
             const value = this.value.toLowerCase().trim();
             
@@ -1667,6 +1671,10 @@ ${cat.name}
             categoryDropdown.classList.remove('hidden');
         });
 
+		 console.log('🧪 categoryInput element:', categoryInput);
+console.log('🧪 categoryDropdown element:', categoryDropdown);
+console.log('🧪 categoryToggle element:', categoryToggle);
+		 
         categoryInput?.addEventListener('focus', function() {
             updateCategoryDropdownVisibility();
         });
