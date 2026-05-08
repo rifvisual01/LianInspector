@@ -860,6 +860,14 @@ console.log("✅ Supabase client:", supabaseClient);
                 sheetInspections = data.filter(d => d.type === 'sheet_inspections') || [];
                 sheetInspectionDetails = data.filter(d => d.type === 'sheet_inspection_details') || [];
                 sheetPhotos = data.filter(d => d.type === 'sheet_photos') || [];
+
+				console.log('🔥 RAW DATA:', data);
+
+console.log('📂 sheetCategories:', sheetCategories);
+console.log('📦 sheetItems:', sheetItems);
+
+console.log('📂 categories length:', sheetCategories.length);
+console.log('📦 items length:', sheetItems.length);
                 
                 // Also sync legacy item types for backward compatibility
                 const legacyUsers = data.filter(d => d.type === 'user') || [];
