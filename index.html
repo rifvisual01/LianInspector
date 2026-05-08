@@ -852,46 +852,61 @@ console.log("✅ Supabase client:", supabaseClient);
 		 let deleteTargetId = null;
 
         const dataHandler = {
-            onDataChanged(data) {
-                // Separate data by type into corresponding sheets
-                sheetUsers = data.filter(d => d.type === 'sheet_users') || [];
-                sheetCategories = data.filter(d => d.type === 'sheet_categories') || [];
-                sheetItems = data.filter(d => d.type === 'sheet_items') || [];
-                sheetInspections = data.filter(d => d.type === 'sheet_inspections') || [];
-                sheetInspectionDetails = data.filter(d => d.type === 'sheet_inspection_details') || [];
-                sheetPhotos = data.filter(d => d.type === 'sheet_photos') || [];
+    onDataChanged(data) {
 
-				console.log('🔥 RAW DATA:', data);
+        console.log('🚨 onDataChanged DIPANGGIL');
+        console.log('🚨 DATA MASUK:', data);
 
-console.log('📂 sheetCategories:', sheetCategories);
-console.log('📦 sheetItems:', sheetItems);
+        // Separate data by type into corresponding sheets
+        sheetUsers = data.filter(d => d.type === 'sheet_users') || [];
+        sheetCategories = data.filter(d => d.type === 'sheet_categories') || [];
+        sheetItems = data.filter(d => d.type === 'sheet_items') || [];
+        sheetInspections = data.filter(d => d.type === 'sheet_inspections') || [];
+        sheetInspectionDetails = data.filter(d => d.type === 'sheet_inspection_details') || [];
+        sheetPhotos = data.filter(d => d.type === 'sheet_photos') || [];
 
-console.log('📂 categories length:', sheetCategories.length);
-console.log('📦 items length:', sheetItems.length);
-                
-                // Also sync legacy item types for backward compatibility
-                const legacyUsers = data.filter(d => d.type === 'user') || [];
-                const legacyCategories = data.filter(d => d.type === 'category') || [];
-                const legacyItems = data.filter(d => d.type === 'item') || [];
-                const legacyInspections = data.filter(d => d.type === 'inspection') || [];
-                
-                // Update aliases - merge sheet and legacy types
-                allUsers = [...sheetUsers, ...legacyUsers];
-                allCategories = [...sheetCategories, ...legacyCategories];
-                allItems = [...sheetItems, ...legacyItems];
-                allInspections = [...sheetInspections, ...legacyInspections];
-                
-                adminExists = allUsers.some(u => u.role === 'admin');
-                updateQuickLoginUI();
-                updateDashboard();
-                renderItems();
-                renderStaff();
-                renderCategories();
-                renderCategoryFilterDropdown();
-                renderInspectionHistory();
-            }
-        };
+        console.log('🔥 RAW DATA:', data);
 
+        console.log('📂 sheetCategories:', sheetCategories);
+        console.log('📦 sheetItems:', sheetItems);
+
+        console.log('📂 categories length:', sheetCategories.length);
+        console.log('📦 items length:', sheetItems.length);
+
+        // Also sync legacy item types for backward compatibility
+        const legacyUsers = data.filter(d => d.type === 'user') || [];
+        const legacyCategories = data.filter(d => d.type === 'category') || [];
+        const legacyItems = data.filter(d => d.type === 'item') || [];
+        const legacyInspections = data.filter(d => d.type === 'inspection') || [];
+
+        console.log('🧩 legacyUsers:', legacyUsers);
+        console.log('🧩 legacyCategories:', legacyCategories);
+        console.log('🧩 legacyItems:', legacyItems);
+
+        // Update aliases - merge sheet and legacy types
+        allUsers = [...sheetUsers, ...legacyUsers];
+        allCategories = [...sheetCategories, ...legacyCategories];
+        allItems = [...sheetItems, ...legacyItems];
+        allInspections = [...sheetInspections, ...legacyInspections];
+
+        console.log('✅ FINAL allCategories:', allCategories);
+        console.log('✅ FINAL allItems:', allItems);
+
+        adminExists = allUsers.some(u => u.role === 'admin');
+
+        console.log('🚀 START RENDER');
+
+        updateQuickLoginUI();
+        updateDashboard();
+        renderItems();
+        renderStaff();
+        renderCategories();
+        renderCategoryFilterDropdown();
+        renderInspectionHistory();
+
+        console.log('✅ RENDER SELESAI');
+    }
+};
 		window.dataSdk = {
 
   async create(table, payload) {
@@ -975,6 +990,22 @@ function getTable(type) {
   const { data: categories } = await supabaseClient.from('categories').select('*');
   const { data: items } = await supabaseClient.from('items').select('*');
   const { data: inspections } = await supabaseClient.from('inspections').select('*');
+
+			console.log('🟦 CATEGORIES RAW:', categories);
+console.log('🟩 ITEMS RAW:', items);
+console.log('🟨 INSPECTIONS RAW:', inspections);
+
+console.log('🟦 categories length:', categories?.length);
+console.log('🟩 items length:', items?.length);
+console.log('🟨 inspections length:', inspections?.length);
+
+if (items && items.length > 0) {
+    console.log('🧪 SAMPLE ITEM:', items[0]);
+}
+
+if (categories && categories.length > 0) {
+    console.log('🧪 SAMPLE CATEGORY:', categories[0]);
+}
 
 // 🔥 WAJIB TAMBAH INI
 allInspections = (inspections || []).map(i => ({
