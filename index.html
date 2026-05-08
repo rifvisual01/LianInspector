@@ -2063,8 +2063,11 @@ console.log('CATEGORIES FULL:', sheetCategories);
         async function confirmDeleteItem(id) {
             const item = allItems.find(i => i.__backendId === id);
             if (item) {
-                const result = await window.dataSdk.delete(item);
-                if (result.isOk) {
+                const result = await window.dataSdk.delete(
+  'items',
+  item.__backendId
+);
+               if (result) {
                     showToast('✓ Item berhasil dihapus!');
                 } else {
                     showToast('Gagal menghapus item', 'error');
@@ -2158,10 +2161,13 @@ console.log('CATEGORIES FULL:', sheetCategories);
     created_at: new Date().toISOString()
 };
 
-            const result = await window.dataSdk.create(newCategory);
+            const result = await window.dataSdk.create(
+  'categories',
+  newCategory
+);
             setButtonLoading(button, false);
             
-            if (result.isOk) {
+            if (result) {
                 document.getElementById('categoryModal').classList.add('hidden');
                 showToast('✓ Kategori berhasil ditambahkan!');
             } else {
@@ -2274,7 +2280,7 @@ console.log('CATEGORIES FULL:', sheetCategories);
 
             // Actually delete on second click
             const result = await window.dataSdk.delete(cat);
-            if (result.isOk) {
+            if (result) {
                 showToast('✓ Kategori berhasil dihapus!');
             } else {
                 showToast('❌ Gagal menghapus kategori', 'error');
