@@ -1813,6 +1813,11 @@ if (error) {
 } else {
   console.log('✓ Item created successfully');
   document.getElementById('itemModal').classList.add('hidden');
+await loadCategories();
+await loadItems();
+
+renderItems();
+updateDashboard();
   showToast('✓ Item berhasil ditambahkan!');
 }
             }
