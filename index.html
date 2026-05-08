@@ -1596,6 +1596,10 @@ filterLabel.textContent = cat?.name || 'Semua Kategori';
         const categoryToggle = document.getElementById('categoryDropdownToggle');
 
         function updateCategoryDropdownVisibility() {
+			console.log('📂 updateCategoryDropdownVisibility CALLED');
+console.log('📂 sheetCategories:', sheetCategories);
+console.log('📂 total categories:', sheetCategories.length);
+			
             if (sheetCategories.length > 0) {
                 categoryToggle.classList.remove('hidden');
             } else {
@@ -1616,6 +1620,7 @@ filterLabel.textContent = cat?.name || 'Semua Kategori';
             const filtered = sheetCategories.filter(cat => 
                 cat.name.toLowerCase().includes(value)
             );
+			console.log('🔎 FILTERED CATEGORIES:', filtered);
             
             if (filtered.length > 0) {
                 let html = filtered.map(cat => 
