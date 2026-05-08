@@ -1812,13 +1812,29 @@ if (error) {
   showToast('Gagal menambahkan item', 'error');
 } else {
   console.log('✓ Item created successfully');
-  document.getElementById('itemModal').classList.add('hidden');
-await loadCategories();
-await loadItems();
+
+document.getElementById('itemModal').classList.add('hidden');
+
+const { data: latestItems } = await supabaseClient
+  .from('items')
+  .select('*');
+
+if (latestItems) {
+  sheetItems = latestItems;
+}
+
+const { data: latestCategories } = await supabaseClient
+  .from('categories')
+  .select('*');
+
+if (latestCategories) {
+  sheetCategories = latestCategories;
+}
 
 renderItems();
 updateDashboard();
-  showToast('✓ Item berhasil ditambahkan!');
+
+showToast('✓ Item berhasil ditambahkan!');
 }
             }
         });
