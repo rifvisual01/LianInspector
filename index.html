@@ -1855,9 +1855,9 @@ showToast('✓ Item berhasil ditambahkan!');
 console.log('sheetCategories:', sheetCategories);
 console.log('itemsToDisplay:', itemsToDisplay);
             
-            if (selectedCategoryFilter) {
-                itemsToDisplay = itemsToDisplay.filter(i => i.category === selectedCategoryFilter);
-            }
+           if (selectedCategoryFilter) {
+    itemsToDisplay = sheetItems.filter(i => i.category === selectedCategoryFilter);
+}
 
             // Show/hide sections based on whether items exist
             if (itemsToDisplay.length === 0) {
