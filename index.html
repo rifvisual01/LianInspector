@@ -1497,7 +1497,7 @@ list.appendChild(card);
                 btn.innerHTML = `
                     <i data-lucide="tag" style="width: 16px; height: 16px; color: #7c3aed;"></i>
                     ${cat.name}
-                    <span class="ml-auto text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">${sheetItems.filter(i => i.categoryId === cat.name).length}</span>
+                    <span class="ml-auto text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">${sheetItems.filter(i => i.category === cat.name).length}</span>
                 `;
                 btn.addEventListener('click', () => {
                     filterByCategory(cat.name);
@@ -1515,7 +1515,7 @@ list.appendChild(card);
             if (categoryId === null) {
                 filterLabel.textContent = 'Semua Kategori';
             } else {
-                const cat = sheetCategories.find(c => c.name === categoryId);
+                const cat = sheetCategories.find(c => c.name === item.category);
 filterLabel.textContent = cat?.name || 'Semua Kategori';
             }
             
@@ -1557,7 +1557,7 @@ filterLabel.textContent = cat?.name || 'Semua Kategori';
         const categoryToggle = document.getElementById('categoryDropdownToggle');
 
         function updateCategoryDropdownVisibility() {
-            if (allCategories.length > 0) {
+            if (sheetCategories.length > 0) {
                 categoryToggle.classList.remove('hidden');
             } else {
                 categoryToggle.classList.add('hidden');
@@ -1574,7 +1574,7 @@ filterLabel.textContent = cat?.name || 'Semua Kategori';
                 return;
             }
             
-            const filtered = allCategories.filter(cat => 
+            const filtered = sheetCategories.filter(cat => 
                 cat.name.toLowerCase().includes(value)
             );
             
@@ -1587,7 +1587,7 @@ ${cat.name}
                 ).join('');
                 
                 // Add option to create new category if text doesn't match exactly
-                const exactMatch = allCategories.find(cat => cat.name.toLowerCase() === value);
+                const exactMatch = sheetCategories.find(cat => cat.name.toLowerCase() === value);
                 if (!exactMatch) {
                     html += `<div class="autocomplete-item" style="background-color: #f0fdf4; color: #16a34a; border-top: 1px solid #dcfce7; padding: 16px !important; font-size: 15px !important; font-weight: 600;" onclick="selectCategory('new', '${value}')">➕ Buat kategori baru: <strong>${value}</strong></div>`;
                 }
@@ -1610,11 +1610,11 @@ ${cat.name}
 
         categoryToggle?.addEventListener('click', function(e) {
             e.preventDefault();
-            if (allCategories.length === 0) {
+            if (sheetCategories.length === 0) {
                 showToast('No categories available. Create one first.', 'error');
                 return;
             }
-            categoryDropdown.innerHTML = allCategories.map(cat => 
+            categoryDropdown.innerHTML = sheetCategories.map(cat => 
     `<div class="autocomplete-item"
     onclick="selectCategory('${cat.id}', '${cat.name}')">
     ${cat.name}
@@ -2086,8 +2086,8 @@ console.log('CATEGORIES FULL:', sheetCategories);
             }
 
             sheetCategories.forEach(cat => {
-                const itemsInCat = sheetItems.filter(i => i.categoryId === cat.name).length;
-                const categoryItemsInCat = sheetItems.filter(i => i.categoryId === cat.name);
+                const itemsInCat = sheetItems.filter(i => i.category === cat.name).length;
+                const categoryItemsInCat = sheetItems.filter(i => i.category === cat.name);
                 
                 const card = document.createElement('div');
                 card.className = 'card-modern rounded-lg shadow-sm hover:shadow-md transition-all border border-gray-100 hover:border-blue-300 overflow-hidden';
@@ -2150,7 +2150,7 @@ console.log('CATEGORIES FULL:', sheetCategories);
                 return;
             }
 
-            const itemsInCat = sheetItems.filter(i => i.categoryId === cat.name).length;
+            const itemsInCat = sheetItems.filter(i => i.category === cat.name).length;
             
             if (itemsInCat > 0) {
                 showToast(`❌ Tidak bisa hapus! Ada ${itemsInCat} item dalam kategori ini.`, 'error');
@@ -2759,7 +2759,7 @@ modal.style.zIndex = '9999999'; // 🔥 naikkan layer
             vehicleDisplay.textContent = `🚗 ${inspectionFormData.vehicleType} - ${inspectionFormData.vehiclePlate}`;
             
             const categories = [];
-            allCategories.forEach(cat => {
+            sheetCategories.forEach(cat => {
                 const itemsInCat = allItems.filter(item => item.category === cat.name);
                 if (itemsInCat.length > 0) {
                     categories.push({ category: cat, items: itemsInCat });
@@ -3392,7 +3392,7 @@ modal.style.zIndex = '9999999'; // 🔥 naikkan layer
                 itemsData = JSON.parse(inspection.issues || '{}');
                 console.log('✓ [5] Parsed items data:', itemsData);
                 console.log('📋 [6] All items count:', allItems.length);
-                console.log('📁 [7] All categories count:', allCategories.length);
+                console.log('📁 [7] All categories count:', sheetCategories.length);
             } catch (e) {
                 console.warn('⚠️ [WARNING] Could not parse issues JSON:', e);
                 console.log('[8] Raw issues string:', inspection.issues);
@@ -3473,7 +3473,7 @@ modal.style.zIndex = '9999999'; // 🔥 naikkan layer
             `;
             
             const categoryMap = new Map();
-            allCategories.forEach(cat => {
+            sheetCategories.forEach(cat => {
                 const itemsInCat = allItems.filter(item => item.category === cat.name);
                 if (itemsInCat.length > 0) {
                    categoryMap.set(cat.name, { category: cat, items: itemsInCat });
