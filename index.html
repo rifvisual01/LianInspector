@@ -1515,8 +1515,8 @@ list.appendChild(card);
             if (categoryId === null) {
                 filterLabel.textContent = 'Semua Kategori';
             } else {
-                const cat = sheetCategories.find(c => c.categoryId === categoryId);
-                filterLabel.textContent = cat?.categoryName || 'Semua Kategori';
+                const cat = sheetCategories.find(c => c.name === categoryId);
+filterLabel.textContent = cat?.name || 'Semua Kategori';
             }
             
             document.getElementById('categoryFilterDropdown').classList.add('hidden');
@@ -1575,7 +1575,7 @@ list.appendChild(card);
             }
             
             const filtered = allCategories.filter(cat => 
-                cat.categoryName.toLowerCase().includes(value)
+                cat.name.toLowerCase().includes(value)
             );
             
             if (filtered.length > 0) {
@@ -1587,7 +1587,7 @@ ${cat.name}
                 ).join('');
                 
                 // Add option to create new category if text doesn't match exactly
-                const exactMatch = allCategories.find(cat => cat.categoryName.toLowerCase() === value);
+                const exactMatch = allCategories.find(cat => cat.name.toLowerCase() === value);
                 if (!exactMatch) {
                     html += `<div class="autocomplete-item" style="background-color: #f0fdf4; color: #16a34a; border-top: 1px solid #dcfce7; padding: 16px !important; font-size: 15px !important; font-weight: 600;" onclick="selectCategory('new', '${value}')">➕ Buat kategori baru: <strong>${value}</strong></div>`;
                 }
@@ -1877,7 +1877,7 @@ console.log('itemsToDisplay:', itemsToDisplay);
                 itemsToDisplay = itemsToDisplay.filter(item => {
                     const itemName = item.name.toLowerCase();
                     const cat = sheetCategories.find(c => c.name === item.category);
-                    const categoryName = cat?.categoryName.toLowerCase() || '';
+                    const categoryName = cat?.name?.toLowerCase() || '';
                     
                     return itemName.includes(currentSearchQuery) || categoryName.includes(currentSearchQuery);
                 });
@@ -1889,8 +1889,10 @@ console.log('itemsToDisplay:', itemsToDisplay);
             }
 
             itemsToDisplay.forEach(item => {
-				console.log('ITEM:', item.name);
-console.log('ITEM CATEGORY:', item.category);
+				
+				console.log('ITEM FULL:', item);
+console.log('CATEGORIES FULL:', sheetCategories);
+				
                 const damages = Array.isArray(item.damage_types)
   ? item.damage_types
   : [];
@@ -1909,7 +1911,7 @@ console.log('ITEM CATEGORY:', item.category);
                         <div class="flex items-start justify-between gap-3">
                             <div class="flex-1 min-w-0">
                                 <h3 class="font-bold text-gray-900 text-sm truncate">${item.name}</h3>
-                                <p class="text-xs text-gray-600 truncate">📁 ${cat?.categoryName || 'Unknown'}</p>
+                                <p class="text-xs text-gray-600 truncate">📁 ${cat?.name || 'Unknown'}</p>
                             </div>
                             <div class="flex items-center gap-2 flex-shrink-0">
                                 <span class="text-lg">${criticalEmoji}</span>
@@ -1984,7 +1986,7 @@ console.log('ITEM CATEGORY:', item.category);
                 document.getElementById('itemCriticalLevel').value = item.critical_level;
                 
                 const cat = sheetCategories.find(c => c.name === item.category);
-                document.getElementById('itemCategory').value = cat?.categoryName || '';
+                document.getElementById('itemCategory').value = cat?.name || '';
                 document.getElementById('itemCategory').dataset.categoryId = item.category;
                 
                 // Load damages
@@ -2050,20 +2052,17 @@ console.log('ITEM CATEGORY:', item.category);
                 return;
             }
 
-            if (sheetCategories.find(c => c.categoryName.toLowerCase() === categoryName.toLowerCase())) {
+            if (sheetCategories.find(c => c.name.toLowerCase() === categoryName.toLowerCase())) {
                 showToast('❌ Kategori sudah ada', 'error');
                 return;
             }
 
             setButtonLoading(button, true);
 
-            const newCategory = {
-                type: 'sheet_categories',
-                id: 'cat_' + Date.now(),
-                categoryId: 'cat_' + Date.now(),
-                categoryName: categoryName,
-                createdAt: new Date().toISOString()
-            };
+           const newCategory = {
+    name: categoryName,
+    created_at: new Date().toISOString()
+};
 
             const result = await window.dataSdk.create(newCategory);
             setButtonLoading(button, false);
@@ -2778,7 +2777,7 @@ modal.style.zIndex = '9999999'; // 🔥 naikkan layer
                 
                 const header = document.createElement('div');
                 header.className = 'bg-gradient-to-r from-blue-600 to-blue-700 text-white px-4 py-2 rounded-lg font-bold text-sm';
-                header.textContent = `📁 ${category.categoryName} (${items.length} items)`;
+                header.textContent = `📁 ${category.name} (${items.length} items)`;
                 categorySection.appendChild(header);
                 
                 items.forEach(item => {
@@ -3483,7 +3482,7 @@ modal.style.zIndex = '9999999'; // 🔥 naikkan layer
             
             let hasAnyItems = false;
             categoryMap.forEach(({ category, items }) => {
-                let categoryHtml = `<div style="background: #1e3a8a; color: white; padding: 12px; border-radius: 8px 8px 0 0; font-weight: 700; font-size: 12px;">📁 ${category.categoryName}</div>`;
+                let categoryHtml = `<div style="background: #1e3a8a; color: white; padding: 12px; border-radius: 8px 8px 0 0; font-weight: 700; font-size: 12px;">📁 ${category.name}</div>`;
                 let hasItems = false;
                 
                 items.forEach(item => {
