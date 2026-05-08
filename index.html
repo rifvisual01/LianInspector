@@ -852,60 +852,101 @@ console.log("✅ Supabase client:", supabaseClient);
 		 let deleteTargetId = null;
 
         const dataHandler = {
-    onDataChanged(data) {
+   onDataChanged(data) {
 
-        console.log('🚨 onDataChanged DIPANGGIL');
-        console.log('🚨 DATA MASUK:', data);
+    console.log('🚨 onDataChanged DIPANGGIL');
+    console.log('🚨 DATA MASUK:', data);
 
-        // Separate data by type into corresponding sheets
-        sheetUsers = data.filter(d => d.type === 'sheet_users') || [];
-        sheetCategories = data.filter(d => d.type === 'sheet_categories') || [];
-        sheetItems = data.filter(d => d.type === 'sheet_items') || [];
-        sheetInspections = data.filter(d => d.type === 'sheet_inspections') || [];
-        sheetInspectionDetails = data.filter(d => d.type === 'sheet_inspection_details') || [];
-        sheetPhotos = data.filter(d => d.type === 'sheet_photos') || [];
+    // =========================
+    // USERS
+    // =========================
+    sheetUsers = data.filter(d =>
+        d.type === 'sheet_users' ||
+        d.type === 'user'
+    ) || [];
 
-        console.log('🔥 RAW DATA:', data);
+    // =========================
+    // CATEGORIES
+    // =========================
+    sheetCategories = data.filter(d =>
+        d.type === 'sheet_categories' ||
+        d.type === 'category' ||
+        (!d.type && d.name && d.created_at)
+    ) || [];
 
-        console.log('📂 sheetCategories:', sheetCategories);
-        console.log('📦 sheetItems:', sheetItems);
+    // =========================
+    // ITEMS
+    // =========================
+    sheetItems = data.filter(d =>
+        d.type === 'sheet_items' ||
+        d.type === 'item' ||
+        (!d.type && d.category && d.critical_level)
+    ) || [];
 
-        console.log('📂 categories length:', sheetCategories.length);
-        console.log('📦 items length:', sheetItems.length);
+    // =========================
+    // INSPECTIONS
+    // =========================
+    sheetInspections = data.filter(d =>
+        d.type === 'sheet_inspections' ||
+        d.type === 'inspection'
+    ) || [];
 
-        // Also sync legacy item types for backward compatibility
-        const legacyUsers = data.filter(d => d.type === 'user') || [];
-        const legacyCategories = data.filter(d => d.type === 'category') || [];
-        const legacyItems = data.filter(d => d.type === 'item') || [];
-        const legacyInspections = data.filter(d => d.type === 'inspection') || [];
+    // =========================
+    // DETAILS
+    // =========================
+    sheetInspectionDetails = data.filter(d =>
+        d.type === 'sheet_inspection_details'
+    ) || [];
 
-        console.log('🧩 legacyUsers:', legacyUsers);
-        console.log('🧩 legacyCategories:', legacyCategories);
-        console.log('🧩 legacyItems:', legacyItems);
+    // =========================
+    // PHOTOS
+    // =========================
+    sheetPhotos = data.filter(d =>
+        d.type === 'sheet_photos'
+    ) || [];
 
-        // Update aliases - merge sheet and legacy types
-        allUsers = [...sheetUsers, ...legacyUsers];
-        allCategories = [...sheetCategories, ...legacyCategories];
-        allItems = [...sheetItems, ...legacyItems];
-        allInspections = [...sheetInspections, ...legacyInspections];
+    // =========================
+    // DEBUG
+    // =========================
+    console.log('🔥 RAW DATA:', data);
 
-        console.log('✅ FINAL allCategories:', allCategories);
-        console.log('✅ FINAL allItems:', allItems);
+    console.log('📂 sheetCategories:', sheetCategories);
+    console.log('📦 sheetItems:', sheetItems);
 
-        adminExists = allUsers.some(u => u.role === 'admin');
+    console.log('📂 categories length:', sheetCategories.length);
+    console.log('📦 items length:', sheetItems.length);
 
-        console.log('🚀 START RENDER');
+    // =========================
+    // FINAL STATE
+    // =========================
+    allUsers = [...sheetUsers];
+    allCategories = [...sheetCategories];
+    allItems = [...sheetItems];
+    allInspections = [...sheetInspections];
 
-        updateQuickLoginUI();
-        updateDashboard();
-        renderItems();
-        renderStaff();
-        renderCategories();
-        renderCategoryFilterDropdown();
-        renderInspectionHistory();
+    console.log('✅ FINAL allCategories:', allCategories);
+    console.log('✅ FINAL allItems:', allItems);
 
-        console.log('✅ RENDER SELESAI');
-    }
+    // =========================
+    // ADMIN CHECK
+    // =========================
+    adminExists = allUsers.some(u => u.role === 'admin');
+
+    console.log('🚀 START RENDER');
+
+    // =========================
+    // RENDER
+    // =========================
+    updateQuickLoginUI();
+    updateDashboard();
+    renderItems();
+    renderStaff();
+    renderCategories();
+    renderCategoryFilterDropdown();
+    renderInspectionHistory();
+
+    console.log('✅ RENDER SELESAI');
+}
 };
 		window.dataSdk = {
 
