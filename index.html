@@ -1496,11 +1496,11 @@ list.appendChild(card);
                 btn.className = 'w-full text-left px-5 py-3 hover:bg-blue-50 transition-all border-b border-gray-100 text-sm text-gray-900 flex items-center gap-2 font-medium';
                 btn.innerHTML = `
                     <i data-lucide="tag" style="width: 16px; height: 16px; color: #7c3aed;"></i>
-                    ${cat.categoryName}
-                    <span class="ml-auto text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">${sheetItems.filter(i => i.categoryId === cat.categoryId).length}</span>
+                    ${cat.name}
+                    <span class="ml-auto text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">${sheetItems.filter(i => i.categoryId === cat.name).length}</span>
                 `;
                 btn.addEventListener('click', () => {
-                    filterByCategory(cat.categoryId);
+                    filterByCategory(cat.name);
                 });
                 filterList.appendChild(btn);
             });
@@ -1580,7 +1580,10 @@ list.appendChild(card);
             
             if (filtered.length > 0) {
                 let html = filtered.map(cat => 
-                    `<div class="autocomplete-item" onclick="selectCategory('${cat.categoryId}', '${cat.categoryName}')">${cat.categoryName}</div>`
+                    `<div class="autocomplete-item"
+onclick="selectCategory('${cat.id}', '${cat.name}')">
+${cat.name}
+</div>`
                 ).join('');
                 
                 // Add option to create new category if text doesn't match exactly
@@ -1612,8 +1615,11 @@ list.appendChild(card);
                 return;
             }
             categoryDropdown.innerHTML = allCategories.map(cat => 
-                `<div class="autocomplete-item" onclick="selectCategory('${cat.categoryId}', '${cat.categoryName}')">${cat.categoryName}</div>`
-            ).join('');
+    `<div class="autocomplete-item"
+    onclick="selectCategory('${cat.id}', '${cat.name}')">
+    ${cat.name}
+    </div>`
+).join('');
             categoryDropdown.classList.remove('hidden');
         });
 
@@ -1786,9 +1792,12 @@ if (error) {
 
             list.innerHTML = '';
             let itemsToDisplay = sheetItems || [];
+			console.log('sheetItems:', sheetItems);
+console.log('sheetCategories:', sheetCategories);
+console.log('itemsToDisplay:', itemsToDisplay);
             
             if (selectedCategoryFilter) {
-                itemsToDisplay = itemsToDisplay.filter(i => i.categoryId === selectedCategoryFilter);
+                itemsToDisplay = itemsToDisplay.filter(i => i.category === selectedCategoryFilter);
             }
 
             // Show/hide sections based on whether items exist
@@ -1808,7 +1817,7 @@ if (error) {
             if (currentSearchQuery) {
                 itemsToDisplay = itemsToDisplay.filter(item => {
                     const itemName = item.name.toLowerCase();
-                    const cat = sheetCategories.find(c => c.categoryId === item.category);
+                    const cat = sheetCategories.find(c => c.name === item.category);
                     const categoryName = cat?.categoryName.toLowerCase() || '';
                     
                     return itemName.includes(currentSearchQuery) || categoryName.includes(currentSearchQuery);
@@ -1821,8 +1830,12 @@ if (error) {
             }
 
             itemsToDisplay.forEach(item => {
-                const damages = item.damageTypeId ? item.damageTypeId.split(',').filter(d => d) : [];
-                const cat = sheetCategories.find(c => c.categoryId === item.category);
+				console.log('ITEM:', item.name);
+console.log('ITEM CATEGORY:', item.category);
+                const damages = Array.isArray(item.damage_types)
+  ? item.damage_types
+  : [];
+                const cat = sheetCategories.find(c => c.name === item.category);
                 
                 let criticalEmoji = '🟢';
                 if (item.critical_level === 'Medium') criticalEmoji = '🟡';
@@ -1911,13 +1924,15 @@ if (error) {
                 document.getElementById('itemName').value = item.name;
                 document.getElementById('itemCriticalLevel').value = item.critical_level;
                 
-                const cat = sheetCategories.find(c => c.categoryId === item.category);
+                const cat = sheetCategories.find(c => c.name === item.category);
                 document.getElementById('itemCategory').value = cat?.categoryName || '';
                 document.getElementById('itemCategory').dataset.categoryId = item.category;
                 
                 // Load damages
                 document.getElementById('damageList').innerHTML = '';
-                const damages = item.damageTypeId ? item.damageTypeId.split(',').filter(d => d) : [];
+                const damages = Array.isArray(item.damage_types)
+  ? item.damage_types
+  : [];
                 if (damages.length > 0) {
                     document.getElementById('damageList').classList.remove('hidden');
                     document.getElementById('damageList').removeAttribute('data-empty');
@@ -2013,8 +2028,8 @@ if (error) {
             }
 
             sheetCategories.forEach(cat => {
-                const itemsInCat = sheetItems.filter(i => i.categoryId === cat.categoryId).length;
-                const categoryItemsInCat = sheetItems.filter(i => i.categoryId === cat.categoryId);
+                const itemsInCat = sheetItems.filter(i => i.categoryId === cat.name).length;
+                const categoryItemsInCat = sheetItems.filter(i => i.categoryId === cat.name);
                 
                 const card = document.createElement('div');
                 card.className = 'card-modern rounded-lg shadow-sm hover:shadow-md transition-all border border-gray-100 hover:border-blue-300 overflow-hidden';
@@ -2022,7 +2037,7 @@ if (error) {
                     <div class="bg-gradient-to-r from-blue-50 to-cyan-50 p-4 border-b border-gray-200">
                         <div class="flex items-start justify-between gap-3">
                             <div class="flex-1 cursor-pointer" onclick="toggleCategoryDropdown('${cat.__backendId}')">
-                                <h3 class="font-bold text-gray-900 text-sm">${cat.categoryName}</h3>
+                                <h3 class="font-bold text-gray-900 text-sm">${cat.name}</h3>
                                 <p class="text-xs text-gray-600 mt-2">📊 ${itemsInCat} item${itemsInCat !== 1 ? 's' : ''}</p>
                             </div>
                             <button class="delete-category-btn p-2 hover:bg-red-100 rounded transition-all flex-shrink-0" data-cat-id="${cat.__backendId}" title="Hapus kategori">
@@ -2077,7 +2092,7 @@ if (error) {
                 return;
             }
 
-            const itemsInCat = sheetItems.filter(i => i.categoryId === cat.categoryId).length;
+            const itemsInCat = sheetItems.filter(i => i.categoryId === cat.name).length;
             
             if (itemsInCat > 0) {
                 showToast(`❌ Tidak bisa hapus! Ada ${itemsInCat} item dalam kategori ini.`, 'error');
@@ -2687,7 +2702,7 @@ modal.style.zIndex = '9999999'; // 🔥 naikkan layer
             
             const categories = [];
             allCategories.forEach(cat => {
-                const itemsInCat = allItems.filter(item => item.category === cat.categoryId);
+                const itemsInCat = allItems.filter(item => item.category === cat.name);
                 if (itemsInCat.length > 0) {
                     categories.push({ category: cat, items: itemsInCat });
                 }
@@ -3401,9 +3416,9 @@ modal.style.zIndex = '9999999'; // 🔥 naikkan layer
             
             const categoryMap = new Map();
             allCategories.forEach(cat => {
-                const itemsInCat = allItems.filter(item => item.category === cat.categoryId);
+                const itemsInCat = allItems.filter(item => item.category === cat.name);
                 if (itemsInCat.length > 0) {
-                    categoryMap.set(cat.categoryId, { category: cat, items: itemsInCat });
+                   categoryMap.set(cat.name, { category: cat, items: itemsInCat });
                 }
             });
             
