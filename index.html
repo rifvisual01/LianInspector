@@ -1611,83 +1611,112 @@ console.log('📂 total categories:', sheetCategories.length);
 console.log('🧪 categoryDropdown element:', categoryDropdown);
 console.log('🧪 categoryToggle element:', categoryToggle);
 		 
-        categoryInput?.addEventListener('input', function() {
-            const value = this.value.toLowerCase().trim();
-            
-            if (!value) {
-                categoryDropdown.classList.add('hidden');
-                this.dataset.categoryId = '';
-                updateCategoryDropdownVisibility();
-                return;
-            }
-            
-            const filtered = sheetCategories.filter(cat => 
-                cat.name.toLowerCase().includes(value)
-            );
-			console.log('🔎 FILTERED CATEGORIES:', filtered);
-            
-            if (filtered.length > 0) {
-                let html = filtered.map(cat => 
-                    `<div class="autocomplete-item"
-onclick="selectCategory('${cat.id}', '${cat.name}')">
-${cat.name}
-</div>`
-                ).join('');
-                
-                // Add option to create new category if text doesn't match exactly
-                const exactMatch = sheetCategories.find(cat => cat.name.toLowerCase() === value);
-                if (!exactMatch) {
-                    html += `<div class="autocomplete-item" style="background-color: #f0fdf4; color: #16a34a; border-top: 1px solid #dcfce7; padding: 16px !important; font-size: 15px !important; font-weight: 600;" onclick="selectCategory('new', '${value}')">➕ Buat kategori baru: <strong>${value}</strong></div>`;
-                }
-                
-                categoryDropdown.innerHTML = html;
-                categoryDropdown.classList.remove('hidden');
-            } else {
-                // Show option to create new category
-                categoryDropdown.innerHTML = `<div class="autocomplete-item" style="background-color: #f0fdf4; color: #16a34a; padding: 16px !important; font-size: 15px !important; font-weight: 600;" onclick="selectCategory('new', '${value}')">➕ Buat kategori baru: <strong>${value}</strong></div>`;
-                categoryDropdown.classList.remove('hidden');
-                this.dataset.categoryId = '';
-            }
-        });
+        document.addEventListener('input', function(e) {
 
-        document.addEventListener('click', function(e) {
-            if (e.target !== categoryInput && e.target !== categoryToggle && !categoryDropdown.contains(e.target)) {
-                categoryDropdown.classList.add('hidden');
-            }
-        });
+    if (e.target && e.target.id === 'itemCategory') {
 
-        categoryToggle?.addEventListener('click', function(e) {
-            e.preventDefault();
-            if (sheetCategories.length === 0) {
-                showToast('No categories available. Create one first.', 'error');
-                return;
-            }
-            categoryDropdown.innerHTML = sheetCategories.map(cat => 
-    `<div class="autocomplete-item"
-    onclick="selectCategory('${cat.id}', '${cat.name}')">
-    ${cat.name}
-    </div>`
-).join('');
+        console.log('🔥 INPUT EVENT WORKING');
+
+        const categoryInput = e.target;
+        const categoryDropdown = document.getElementById('categoryDropdown');
+
+        if (!categoryDropdown) return;
+
+        const value = categoryInput.value.toLowerCase().trim();
+
+        if (!value) {
+
+            categoryDropdown.innerHTML = sheetCategories.map(cat => `
+                <div class="autocomplete-item"
+                    onclick="selectCategory('${cat.name}')">
+                    ${cat.name}
+                </div>
+            `).join('');
+
             categoryDropdown.classList.remove('hidden');
-        });
+            return;
+        }
 
-		 console.log('🧪 categoryInput element:', categoryInput);
-console.log('🧪 categoryDropdown element:', categoryDropdown);
-console.log('🧪 categoryToggle element:', categoryToggle);
-		 
-        categoryInput?.addEventListener('focus', function() {
-            updateCategoryDropdownVisibility();
-        });
+        const filtered = sheetCategories.filter(cat =>
+            cat.name.toLowerCase().includes(value)
+        );
 
-        window.selectCategory = (categoryId, categoryName) => {
-            document.getElementById('itemCategory').value = categoryName;
-            if (categoryId === 'new') {
-                document.getElementById('itemCategory').dataset.categoryId = '';
-            } else {
-                document.getElementById('itemCategory').dataset.categoryId = categoryId;
-            }
-            document.getElementById('categoryDropdown').classList.add('hidden');
-        };
+        console.log('🔎 FILTERED:', filtered);
+
+        let html = '';
+
+        if (filtered.length > 0) {
+
+            html = filtered.map(cat => `
+                <div class="autocomplete-item"
+                    onclick="selectCategory('${cat.name}')">
+                    ${cat.name}
+                </div>
+            `).join('');
+
+        } else {
+
+            html = `
+                <div class="autocomplete-item"
+                    style="background:#f0fdf4;color:#16a34a;font-weight:600;"
+                    onclick="selectCategory('${value}')">
+                    ➕ Buat kategori baru: ${value}
+                </div>
+            `;
+        }
+
+        categoryDropdown.innerHTML = html;
+        categoryDropdown.classList.remove('hidden');
+    }
+});
+
+document.addEventListener('focusin', function(e) {
+
+    if (e.target && e.target.id === 'itemCategory') {
+
+        console.log('🔥 FOCUS EVENT WORKING');
+
+        const categoryDropdown = document.getElementById('categoryDropdown');
+
+        if (!categoryDropdown) return;
+
+        categoryDropdown.innerHTML = sheetCategories.map(cat => `
+            <div class="autocomplete-item"
+                onclick="selectCategory('${cat.name}')">
+                ${cat.name}
+            </div>
+        `).join('');
+
+        categoryDropdown.classList.remove('hidden');
+    }
+});
+
+document.addEventListener('click', function(e) {
+
+    const categoryInput = document.getElementById('itemCategory');
+    const categoryDropdown = document.getElementById('categoryDropdown');
+
+    if (!categoryInput || !categoryDropdown) return;
+
+    if (
+        e.target !== categoryInput &&
+        !categoryDropdown.contains(e.target)
+    ) {
+        categoryDropdown.classList.add('hidden');
+    }
+});
+
+window.selectCategory = function(categoryName) {
+
+    const input = document.getElementById('itemCategory');
+    const dropdown = document.getElementById('categoryDropdown');
+
+    if (input) {
+        input.value = categoryName;
+    }
+
+    dropdown?.classList.add('hidden');
+};
 
         document.getElementById('addDamageBtn')?.addEventListener('click', () => {
             const input = document.getElementById('newDamageInput');
